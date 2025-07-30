@@ -19,6 +19,7 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showPatientForm, setShowPatientForm] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -77,8 +78,26 @@ function Dashboard() {
           <div>
             <PatientList 
               onSelectPatient={setSelectedPatient}
-              onAddPatient={() => setShowPatientForm(true)}
+              onAddPatient={() => {
+                setEditingPatient(null);
+                setShowPatientForm(true);
+              }}
             />
+            {showPatientForm && (
+              <PatientForm
+                patient={editingPatient || undefined}
+                onClose={() => {
+                  setShowPatientForm(false);
+                  setEditingPatient(null);
+                }}
+                onSave={(patientData) => {
+                  console.log('Saving patient:', patientData);
+                  // TODO: Implement save logic
+                  setShowPatientForm(false);
+                  setEditingPatient(null);
+                }}
+              />
+            )}
           </div>
         );
 
