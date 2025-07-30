@@ -212,36 +212,37 @@ export function PrescriptionList() {
             
             body {
               font-family: 'Arial', sans-serif;
-              line-height: 1.6;
+              line-height: 1.4;
               color: #333;
               max-width: 800px;
               margin: 0 auto;
-              padding: 20px;
+              padding: 15px;
               background: white;
+              font-size: 12px;
             }
             
             .header {
               text-align: center;
               border-bottom: 3px solid #2563eb;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
+              padding-bottom: 15px;
+              margin-bottom: 20px;
             }
             
             .clinic-name {
-              font-size: 28px;
+              font-size: 22px;
               font-weight: bold;
               color: #2563eb;
               margin-bottom: 5px;
             }
             
             .clinic-subtitle {
-              font-size: 16px;
+              font-size: 14px;
               color: #666;
               margin-bottom: 10px;
             }
             
             .clinic-info {
-              font-size: 14px;
+              font-size: 12px;
               color: #666;
               line-height: 1.4;
             }
@@ -249,30 +250,30 @@ export function PrescriptionList() {
             .info-section {
               display: flex;
               justify-content: space-between;
-              margin-bottom: 25px;
+              margin-bottom: 20px;
               gap: 20px;
             }
             
             .patient-info, .doctor-info {
               flex: 1;
               background: #f8f9fa;
-              padding: 15px;
+              padding: 12px;
               border-radius: 8px;
               border-left: 4px solid #2563eb;
             }
             
             .info-title {
-              font-size: 16px;
+              font-size: 14px;
               font-weight: bold;
               color: #2563eb;
-              margin-bottom: 10px;
+              margin-bottom: 8px;
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
             
             .info-item {
-              margin-bottom: 5px;
-              font-size: 14px;
+              margin-bottom: 4px;
+              font-size: 12px;
             }
             
             .info-label {
@@ -280,47 +281,26 @@ export function PrescriptionList() {
               color: #555;
             }
             
-            .diagnosis-section {
-              background: #fff3cd;
-              border: 1px solid #ffeaa7;
-              border-radius: 8px;
-              padding: 15px;
-              margin-bottom: 25px;
-            }
-            
-            .diagnosis-title {
-              font-size: 18px;
-              font-weight: bold;
-              color: #856404;
-              margin-bottom: 10px;
-            }
-            
-            .diagnosis-text {
-              font-size: 16px;
-              font-weight: bold;
-              color: #333;
-            }
-            
             .prescription-section {
-              margin-bottom: 30px;
+              margin-bottom: 20px;
             }
             
             .prescription-title {
-              font-size: 20px;
+              font-size: 16px;
               font-weight: bold;
               color: #2563eb;
-              margin-bottom: 20px;
+              margin-bottom: 15px;
               text-align: center;
               text-transform: uppercase;
               letter-spacing: 1px;
               border-bottom: 2px solid #2563eb;
-              padding-bottom: 10px;
+              padding-bottom: 8px;
             }
             
             .prescription-item {
               border: 2px solid #e5e7eb;
-              padding: 20px;
-              margin-bottom: 15px;
+              padding: 15px;
+              margin-bottom: 12px;
               border-radius: 8px;
               background: white;
               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -329,24 +309,25 @@ export function PrescriptionList() {
             .medication-header {
               display: flex;
               align-items: center;
-              margin-bottom: 15px;
+              margin-bottom: 12px;
             }
             
             .medication-number {
               background: #2563eb;
               color: white;
-              width: 30px;
-              height: 30px;
+              width: 25px;
+              height: 25px;
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
               font-weight: bold;
-              margin-right: 15px;
+              margin-right: 12px;
+              font-size: 12px;
             }
             
             .medication-name {
-              font-size: 20px;
+              font-size: 16px;
               font-weight: bold;
               color: #333;
             }
@@ -354,28 +335,28 @@ export function PrescriptionList() {
             .prescription-details {
               display: grid;
               grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-              gap: 15px;
-              margin-bottom: 15px;
+              gap: 12px;
+              margin-bottom: 12px;
             }
             
             .detail-item {
               background: #f8f9fa;
-              padding: 10px;
+              padding: 8px;
               border-radius: 5px;
               border-left: 3px solid #2563eb;
             }
             
             .detail-label {
-              font-size: 12px;
+              font-size: 10px;
               font-weight: bold;
               color: #666;
               text-transform: uppercase;
               letter-spacing: 0.5px;
-              margin-bottom: 5px;
+              margin-bottom: 4px;
             }
             
             .detail-value {
-              font-size: 14px;
+              font-size: 12px;
               font-weight: bold;
               color: #333;
             }
@@ -384,88 +365,92 @@ export function PrescriptionList() {
               background: #e8f4fd;
               border: 1px solid #bee5eb;
               border-radius: 5px;
-              padding: 12px;
-              margin-top: 10px;
+              padding: 10px;
+              margin-top: 8px;
             }
             
             .instructions-label {
               font-weight: bold;
               color: #0c5460;
-              margin-bottom: 5px;
+              margin-bottom: 4px;
+              font-size: 11px;
             }
             
             .instructions-text {
               color: #0c5460;
               font-style: italic;
+              font-size: 11px;
             }
             
             .notes-section {
               background: #fff3cd;
               border: 1px solid #ffeaa7;
               border-radius: 8px;
-              padding: 15px;
-              margin-bottom: 25px;
+              padding: 12px;
+              margin-bottom: 20px;
             }
             
             .notes-title {
               font-weight: bold;
               color: #856404;
-              margin-bottom: 10px;
+              margin-bottom: 8px;
+              font-size: 12px;
             }
             
             .notes-text {
               color: #856404;
               font-style: italic;
+              font-size: 11px;
             }
             
             .signature-section {
               display: flex;
               justify-content: space-between;
-              margin-top: 50px;
-              margin-bottom: 30px;
+              margin-top: 40px;
+              margin-bottom: 20px;
             }
             
             .signature-box {
               text-align: center;
-              width: 200px;
+              width: 180px;
             }
             
             .signature-line {
               border-top: 2px solid #333;
-              margin-bottom: 10px;
-              margin-top: 60px;
+              margin-bottom: 8px;
+              margin-top: 50px;
             }
             
             .signature-label {
-              font-size: 14px;
+              font-size: 12px;
               font-weight: bold;
               color: #666;
             }
             
             .signature-name {
-              font-size: 16px;
+              font-size: 14px;
               font-weight: bold;
               color: #333;
-              margin-top: 5px;
+              margin-top: 4px;
             }
             
             .footer {
               text-align: center;
-              font-size: 12px;
+              font-size: 10px;
               color: #666;
               border-top: 1px solid #e5e7eb;
-              padding-top: 15px;
-              margin-top: 30px;
+              padding-top: 12px;
+              margin-top: 20px;
             }
             
             .footer-item {
-              margin-bottom: 3px;
+              margin-bottom: 2px;
             }
             
             @media print {
               body {
                 margin: 0;
-                padding: 15px;
+                padding: 10px;
               }
               
               .prescription-item {
@@ -513,16 +498,6 @@ export function PrescriptionList() {
             </div>
           </div>
 
-          <div class="diagnosis-section">
-            <div class="diagnosis-title">Diagnostic</div>
-            <div class="diagnosis-text">${consultation.diagnosis}</div>
-            ${consultation.reason ? `
-              <div style="margin-top: 10px;">
-                <span class="info-label">Motif de consultation:</span> ${consultation.reason}
-              </div>
-            ` : ''}
-          </div>
-
           <div class="prescription-section">
             <div class="prescription-title">Ordonnance Médicale</div>
             
@@ -557,13 +532,6 @@ export function PrescriptionList() {
               </div>
             `).join('')}
           </div>
-
-          ${consultation.notes ? `
-            <div class="notes-section">
-              <div class="notes-title">Notes du médecin:</div>
-              <div class="notes-text">${consultation.notes}</div>
-            </div>
-          ` : ''}
 
           <div class="signature-section">
             <div class="signature-box">
