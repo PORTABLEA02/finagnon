@@ -11,7 +11,8 @@ import {
   Stethoscope,
   UserCheck,
   LogOut,
-  Heart
+  Heart,
+  Pill
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,6 +34,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         { id: 'patients', label: 'Patients', icon: Users },
         { id: 'appointments', label: 'Rendez-vous', icon: Calendar },
         { id: 'consultations', label: 'Consultations', icon: Stethoscope },
+        { id: 'prescriptions', label: 'Ordonnances', icon: Pill },
         { id: 'billing', label: 'Facturation', icon: DollarSign },
         { id: 'staff', label: 'Personnel', icon: UserCheck },
         { id: 'inventory', label: 'Stock', icon: Package },
@@ -51,6 +53,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         ...baseItems,
         { id: 'patients', label: 'Patients', icon: Users },
         { id: 'appointments', label: 'Rendez-vous', icon: Calendar },
+        { id: 'prescriptions', label: 'Ordonnances', icon: Pill },
         { id: 'billing', label: 'Facturation', icon: DollarSign },
       ];
     }

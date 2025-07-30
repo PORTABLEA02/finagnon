@@ -9,6 +9,7 @@ import { PatientForm } from './components/Patients/PatientForm';
 import { AppointmentCalendar } from './components/Appointments/AppointmentCalendar';
 import { InventoryManager } from './components/Inventory/InventoryManager';
 import { ConsultationsManager } from './components/Consultations';
+import { PrescriptionList } from './components/Prescriptions';
 import { Patient } from './types';
 
 function Dashboard() {
@@ -83,6 +84,9 @@ function Dashboard() {
 
       case 'consultations':
         return <ConsultationsManager />;
+
+      case 'prescriptions':
+        return <PrescriptionList />;
 
       case 'billing':
         return (
