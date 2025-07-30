@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, User, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { ScheduleSlotForm } from './ScheduleSlotForm';
 
 interface ScheduleEntry {
   id: string;
@@ -53,6 +54,7 @@ export function StaffSchedule() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedShift, setSelectedShift] = useState<string>('all');
   const [schedule, setSchedule] = useState<ScheduleEntry[]>(MOCK_SCHEDULE);
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
 
   const filteredSchedule = schedule.filter(entry => {
     const matchesDate = entry.date === selectedDate;
@@ -133,6 +135,40 @@ export function StaffSchedule() {
     return week;
   };
 
+  const handleAddScheduleSlot = () => {
+    setShowScheduleForm(true);
+  };
+
+  const handleSaveScheduleSlot = (slotData: any) => {
+    const newEntry: ScheduleEntry = {
+      id: Date.now().toString(),
+      staffId: slotData.staffId,
+      staffName: MOCK_STAFF.find(s => s.id === slotData.staffId)?.name || 'Personnel inconnu',
+      role: MOCK_STAFF.find(s => s.id === slotData.staffId)?.role || 'secretary',
+      date: slotData.date,
+      startTime: slotData.startTime,
+      endTime: slotData.endTime,
+      shift: slotData.shift,
+      status: slotData.status
+    };
+    
+    setSchedule([...schedule, newEntry]);
+    setShowScheduleForm(false);
+  };
+
+  const handleCloseScheduleForm = () => {
+    setShowScheduleForm(false);
+  };
+
+  // Mock staff data for the form
+  const MOCK_STAFF = [
+    { id: '1', name: 'Dr. Marie Durand', role: 'admin' },
+    { id: '2', name: 'Dr. Paul Martin', role: 'doctor' },
+    { id: '3', name: 'Sophie Mbala', role: 'secretary' },
+    { id: '4', name: 'Dr. Jean Kouam', role: 'doctor' },
+    { id: '5', name: 'Claire Nkomo', role: 'secretary' }
+  ];
+
   const weekDates = getWeekDates(selectedDate);
   const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -143,7 +179,10 @@ export function StaffSchedule() {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Planning Hebdomadaire</h2>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+            <button 
+              onClick={handleAddScheduleSlot}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            >
               <Plus className="h-4 w-4" />
               <span>Ajouter un créneau</span>
             </button>
@@ -298,7 +337,10 @@ export function StaffSchedule() {
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">Aucun planning pour cette date</p>
-              <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={handleAddScheduleSlot}
+                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 Ajouter un créneau
               </button>
             </div>
@@ -344,6 +386,15 @@ export function StaffSchedule() {
           </div>
         </div>
       </div>
+
+      {/* Formulaire d'ajout de créneau */}
+      {showScheduleForm && (
+        <ScheduleSlotForm
+          selectedDate={selectedDate}
+          onClose={handleCloseScheduleForm}
+          onSave={handleSaveScheduleSlot}
+        />
+      )}
     </div>
   );
 }
