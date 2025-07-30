@@ -154,7 +154,20 @@ function Dashboard() {
 }
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-blue-600 p-3 rounded-full w-16 h-16 mx-auto mb-4 animate-pulse">
+            <Heart className="h-6 w-6 text-white" />
+          </div>
+          <p className="text-gray-600">Chargement de l'application...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginForm />;

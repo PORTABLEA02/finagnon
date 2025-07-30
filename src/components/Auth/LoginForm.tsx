@@ -7,7 +7,21 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
+
+  // Afficher un loader pendant le chargement initial
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-blue-600 p-3 rounded-full w-16 h-16 mx-auto mb-4 animate-pulse">
+            <Heart className="h-10 w-10 text-white" />
+          </div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,12 +39,6 @@ export function LoginForm() {
       setIsLoading(false);
     }
   };
-
-  const demoAccounts = [
-    { email: 'admin@clinique.com', role: 'Administrateur', password: 'demo' },
-    { email: 'dr.martin@clinique.com', role: 'Médecin', password: 'demo' },
-    { email: 'secretaire@clinique.com', role: 'Secrétaire', password: 'demo' }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
@@ -96,23 +104,11 @@ export function LoginForm() {
           </form>
 
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Comptes de démonstration :</h3>
-            <div className="space-y-2">
-              {demoAccounts.map((account, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setEmail(account.email);
-                    setPassword('demo');
-                  }}
-                  className="w-full text-left p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="text-sm font-medium text-gray-800">{account.role}</div>
-                  <div className="text-xs text-gray-500">{account.email}</div>
-                </button>
-              ))}
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Première connexion ? Contactez l'administrateur pour créer votre compte.
+              </p>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Mot de passe : demo</p>
           </div>
         </div>
       </div>
