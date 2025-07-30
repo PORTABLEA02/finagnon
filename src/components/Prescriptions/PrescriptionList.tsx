@@ -183,6 +183,20 @@ export function PrescriptionList() {
     const currentDate = new Date().toLocaleDateString('fr-FR');
     const currentTime = new Date().toLocaleTimeString('fr-FR');
 
+    // Calculer l'âge du patient
+    const calculateAge = (dateOfBirth: string) => {
+      const today = new Date();
+      const birthDate = new Date(dateOfBirth);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    };
+
+    const patientAge = patient ? calculateAge(patient.dateOfBirth) : 'N/A';
+
     return `
       <!DOCTYPE html>
       <html>
@@ -478,7 +492,7 @@ export function PrescriptionList() {
                 <span class="info-label">Nom complet:</span> ${patient?.firstName} ${patient?.lastName}
               </div>
               <div class="info-item">
-                <span class="info-label">Téléphone:</span> ${patient?.phone}
+                <span class="info-label">Âge:</span> ${patientAge} ans
               </div>
               <div class="info-item">
                 <span class="info-label">Date de consultation:</span> ${new Date(consultation.date).toLocaleDateString('fr-FR')}
