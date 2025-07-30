@@ -46,6 +46,7 @@ export function ConsultationForm({ consultation, onClose, onSave }: Consultation
   const [formData, setFormData] = useState({
     patientId: consultation?.patientId || '',
     date: consultation?.date || new Date().toISOString().split('T')[0],
+    type: consultation?.type || 'general',
     reason: consultation?.reason || '',
     symptoms: consultation?.symptoms || '',
     diagnosis: consultation?.diagnosis || '',
@@ -156,6 +157,26 @@ export function ConsultationForm({ consultation, onClose, onSave }: Consultation
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Type de consultation *
+                </label>
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="general">Consultation générale</option>
+                  <option value="specialist">Consultation spécialisée</option>
+                  <option value="emergency">Consultation d'urgence</option>
+                  <option value="followup">Consultation de suivi</option>
+                  <option value="preventive">Consultation préventive</option>
+                  <option value="other">Autre</option>
+                </select>
               </div>
             </div>
 

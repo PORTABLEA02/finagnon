@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Calendar, FileText, Pill, Printer, Edit } from 'lucide-react';
+import { X, User, Calendar, FileText, Pill, Printer, Edit, Tag } from 'lucide-react';
 import { MedicalRecord } from '../../types';
 
 // Mock patients data
@@ -34,6 +34,30 @@ export function ConsultationDetail({ consultation, onClose, onEdit }: Consultati
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const getConsultationTypeLabel = (type: string) => {
+    const types = {
+      general: 'Consultation générale',
+      specialist: 'Consultation spécialisée',
+      emergency: 'Consultation d\'urgence',
+      followup: 'Consultation de suivi',
+      preventive: 'Consultation préventive',
+      other: 'Autre consultation'
+    };
+    return types[type as keyof typeof types] || 'Type non défini';
+  };
+
+  const getConsultationTypeColor = (type: string) => {
+    const colors = {
+      general: 'bg-blue-100 text-blue-800',
+      specialist: 'bg-purple-100 text-purple-800',
+      emergency: 'bg-red-100 text-red-800',
+      followup: 'bg-green-100 text-green-800',
+      preventive: 'bg-yellow-100 text-yellow-800',
+      other: 'bg-gray-100 text-gray-800'
+    };
+    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -113,6 +137,18 @@ export function ConsultationDetail({ consultation, onClose, onEdit }: Consultati
                 <span className="text-sm font-medium text-gray-700">Date:</span>
                 <p className="text-gray-900">{new Date(consultation.date).toLocaleDateString('fr-FR')}</p>
               </div>
+              <div>
+                <span className="text-sm font-medium text-gray-700">Type:</span>
+                <div className="mt-1">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConsultationTypeColor(consultation.type)}`}>
+                    <Tag className="h-3 w-3 mr-1" />
+                    {getConsultationTypeLabel(consultation.type)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <span className="text-sm font-medium text-gray-700">Motif:</span>
                 <p className="text-gray-900">{consultation.reason}</p>

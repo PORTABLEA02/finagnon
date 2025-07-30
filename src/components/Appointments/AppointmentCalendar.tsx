@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, Plus, User, Phone } from 'lucide-react';
 import { Appointment } from '../../types';
+import { AppointmentForm } from './AppointmentForm';
 
 // Mock data
 const MOCK_APPOINTMENTS: Appointment[] = [
@@ -52,6 +53,8 @@ const STATUS_LABELS = {
 export function AppointmentCalendar() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [appointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+  const [showAppointmentForm, setShowAppointmentForm] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
 
   const todayAppointments = appointments.filter(apt => apt.date === selectedDate);
 
@@ -65,13 +68,38 @@ export function AppointmentCalendar() {
     return patient?.phone || '';
   };
 
+  const handleNewAppointment = () => {
+    setEditingAppointment(null);
+    setShowAppointmentForm(true);
+  };
+
+  const handleEditAppointment = (appointment: Appointment) => {
+    setEditingAppointment(appointment);
+    setShowAppointmentForm(true);
+  };
+
+  const handleSaveAppointment = (appointmentData: Partial<Appointment>) => {
+    console.log('Saving appointment:', appointmentData);
+    // TODO: Implement save logic
+    setShowAppointmentForm(false);
+    setEditingAppointment(null);
+  };
+
+  const handleCloseForm = () => {
+    setShowAppointmentForm(false);
+    setEditingAppointment(null);
+  };
+
   return (
-    <div className="space-y-6">
+    <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Planning des Rendez-vous</h2>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+            <button 
+              onClick={handleNewAppointment}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            >
               <Plus className="h-4 w-4" />
               <span>Nouveau RDV</span>
             </button>
@@ -138,6 +166,12 @@ export function AppointmentCalendar() {
                           <button className="text-blue-600 hover:text-blue-800 text-sm font-medium px-2 py-1 rounded">
                             Voir
                           </button>
+                          <button 
+                            onClick={() => handleEditAppointment(appointment)}
+                            className="text-orange-600 hover:text-orange-800 text-sm font-medium px-2 py-1 rounded"
+                          >
+                            Modifier
+                          </button>
                           <button className="text-green-600 hover:text-green-800 text-sm font-medium px-2 py-1 rounded">
                             Confirmer
                           </button>
@@ -162,6 +196,14 @@ export function AppointmentCalendar() {
           )}
         </div>
       </div>
-    </div>
+
+      {showAppointmentForm && (
+        <AppointmentForm
+          appointment={editingAppointment || undefined}
+          onClose={handleCloseForm}
+          onSave={handleSaveAppointment}
+        />
+      )}
+    </>
   );
 }

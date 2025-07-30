@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, Eye, Edit, Calendar, User, Clock, FileText } from 'lucide-react';
+import { Search, Plus, Eye, Edit, Calendar, User, Clock, FileText, Tag } from 'lucide-react';
 import { MedicalRecord, Patient } from '../../types';
 
 // Mock data
@@ -9,6 +9,7 @@ const MOCK_CONSULTATIONS: MedicalRecord[] = [
     patientId: '1',
     doctorId: '2',
     date: '2024-01-20',
+    type: 'specialist',
     reason: 'Douleurs thoraciques',
     symptoms: 'Douleur oppressante au niveau du thorax, essoufflement léger',
     diagnosis: 'Suspicion d\'angine de poitrine',
@@ -30,6 +31,7 @@ const MOCK_CONSULTATIONS: MedicalRecord[] = [
     patientId: '2',
     doctorId: '2',
     date: '2024-01-19',
+    type: 'followup',
     reason: 'Contrôle de routine',
     symptoms: 'Aucun symptôme particulier',
     diagnosis: 'État général satisfaisant',
@@ -65,6 +67,30 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
   const getPatientName = (patientId: string) => {
     const patient = MOCK_PATIENTS.find(p => p.id === patientId);
     return patient ? `${patient.firstName} ${patient.lastName}` : 'Patient inconnu';
+  };
+
+  const getConsultationTypeLabel = (type: string) => {
+    const types = {
+      general: 'Générale',
+      specialist: 'Spécialisée',
+      emergency: 'Urgence',
+      followup: 'Suivi',
+      preventive: 'Préventive',
+      other: 'Autre'
+    };
+    return types[type as keyof typeof types] || 'Non défini';
+  };
+
+  const getConsultationTypeColor = (type: string) => {
+    const colors = {
+      general: 'bg-blue-100 text-blue-800',
+      specialist: 'bg-purple-100 text-purple-800',
+      emergency: 'bg-red-100 text-red-800',
+      followup: 'bg-green-100 text-green-800',
+      preventive: 'bg-yellow-100 text-yellow-800',
+      other: 'bg-gray-100 text-gray-800'
+    };
+    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -113,6 +139,12 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
                     <Calendar className="h-4 w-4 text-gray-400" />
                     <span className="text-sm text-gray-600">
                       {new Date(consultation.date).toLocaleDateString('fr-FR')}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Tag className="h-4 w-4 text-gray-400" />
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${getConsultationTypeColor(consultation.type)}`}>
+                      {getConsultationTypeLabel(consultation.type)}
                     </span>
                   </div>
                 </div>

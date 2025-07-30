@@ -31,6 +31,7 @@ export interface MedicalRecord {
   patientId: string;
   doctorId: string;
   date: string;
+  type: 'general' | 'specialist' | 'emergency' | 'followup' | 'preventive' | 'other';
   reason: string;
   symptoms: string;
   diagnosis: string;
