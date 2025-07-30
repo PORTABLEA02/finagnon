@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Save, Plus, Trash2, User, Calendar, DollarSign, Calculator } from 'lucide-react';
-import { Invoice, InvoiceItem, Patient } from '../../types';
+import { X, Save, Plus, Trash2, User, Calendar, DollarSign, Calculator, Package, Pill, Search, AlertTriangle } from 'lucide-react';
+import { Invoice, InvoiceItem, Patient, Medicine } from '../../types';
 
 // Mock patients data
 const MOCK_PATIENTS: Patient[] = [
@@ -52,6 +52,102 @@ const PREDEFINED_SERVICES = [
   { description: 'Injection', unitPrice: 2000 }
 ];
 
+// Mock medicines data (from inventory)
+const MOCK_MEDICINES: Medicine[] = [
+  {
+    id: '1',
+    name: 'Paracétamol 500mg',
+    category: 'medication',
+    manufacturer: 'Pharma Cameroun',
+    batchNumber: 'PC2024001',
+    expiryDate: '2025-12-31',
+    currentStock: 50,
+    minStock: 20,
+    unitPrice: 250,
+    location: 'Pharmacie - Étagère A1',
+    unit: 'boîte',
+    description: 'Antalgique et antipyrétique'
+  },
+  {
+    id: '2',
+    name: 'Amoxicilline 250mg',
+    category: 'medication',
+    manufacturer: 'MediCam',
+    batchNumber: 'MC2024002',
+    expiryDate: '2025-06-30',
+    currentStock: 45,
+    minStock: 30,
+    unitPrice: 180,
+    location: 'Pharmacie - Étagère B2',
+    unit: 'boîte',
+    description: 'Antibiotique à large spectre'
+  },
+  {
+    id: '3',
+    name: 'Seringues jetables 5ml',
+    category: 'medical-supply',
+    manufacturer: 'MedSupply',
+    batchNumber: 'MS2024003',
+    expiryDate: '2026-03-15',
+    currentStock: 150,
+    minStock: 100,
+    unitPrice: 50,
+    location: 'Salle de soins - Armoire 1',
+    unit: 'pièce',
+    description: 'Seringues stériles à usage unique'
+  },
+  {
+    id: '4',
+    name: 'Gants latex stériles',
+    category: 'medical-supply',
+    manufacturer: 'SafeHands',
+    batchNumber: 'SH2024004',
+    expiryDate: '2025-08-20',
+    currentStock: 80,
+    minStock: 20,
+    unitPrice: 1200,
+    location: 'Salle de soins - Armoire 2',
+    unit: 'boîte de 100',
+    description: 'Gants d\'examen en latex poudrés'
+  },
+  {
+    id: '5',
+    name: 'Compresses stériles 10x10cm',
+    category: 'medical-supply',
+    manufacturer: 'SterileSupply',
+    batchNumber: 'SS2024005',
+    expiryDate: '2025-11-30',
+    currentStock: 25,
+    minStock: 15,
+    unitPrice: 800,
+    location: 'Salle de soins - Étagère C1',
+    unit: 'paquet de 50',
+    description: 'Compresses de gaze stériles'
+  },
+  {
+    id: '6',
+    name: 'Alcool médical 70°',
+    category: 'consumable',
+    manufacturer: 'ChemMed',
+    batchNumber: 'CM2024007',
+    expiryDate: '2025-09-10',
+    currentStock: 12,
+    minStock: 8,
+    unitPrice: 2500,
+    location: 'Salle de soins - Armoire 3',
+    unit: 'litre',
+    description: 'Solution désinfectante'
+  }
+];
+
+const CATEGORY_LABELS = {
+  medication: 'Médicaments',
+  'medical-supply': 'Fournitures médicales',
+  equipment: 'Équipements',
+  consumable: 'Consommables',
+  diagnostic: 'Matériel diagnostic'
+};
+
 interface InvoiceFormProps {
   invoice?: Invoice;
   onClose: () => void;
@@ -76,6 +172,18 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
     quantity: 1,
     unitPrice: 0,
     total: 0
+  });
+
+  const [activeTab, setActiveTab] = useState<'services' | 'products'>('services');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Filtrer les produits médicaux
+  const filteredMedicines = MOCK_MEDICINES.filter(medicine => {
+    const matchesSearch = medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         medicine.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || medicine.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -131,6 +239,15 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
     });
   };
 
+  const selectMedicalProduct = (product: Medicine) => {
+    setNewItem({
+      ...newItem,
+      description: `${product.name} (${product.unit})`,
+      unitPrice: product.unitPrice,
+      total: newItem.quantity * product.unitPrice
+    });
+  };
+
   const getPatientInfo = (patientId: string) => {
     return MOCK_PATIENTS.find(p => p.id === patientId);
   };
@@ -146,9 +263,18 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
     return `INV-${year}-${month}${random}`;
   };
 
+  // Vérifier les produits avec stock faible
+  const getLowStockWarning = (productName: string) => {
+    const product = MOCK_MEDICINES.find(m => productName.includes(m.name));
+    if (product && product.currentStock <= product.minStock) {
+      return `⚠️ Stock faible: ${product.currentStock} ${product.unit} restant(s)`;
+    }
+    return null;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[95vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-xl max-w-5xl w-full mx-4 max-h-[95vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="bg-green-100 p-2 rounded-lg">
@@ -244,77 +370,209 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
             )}
           </div>
 
-          {/* Services et prestations */}
-          <div className="bg-green-50 rounded-lg p-4">
-            <h3 className="font-medium text-green-800 mb-4">Services et Prestations</h3>
-
-            {/* Services existants */}
-            {items.length > 0 && (
-              <div className="mb-4">
-                <div className="bg-white rounded-lg border border-green-200 overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-green-100">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-green-800">Description</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-green-800">Qté</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-green-800">Prix unitaire</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-green-800">Total</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-green-800">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((item, index) => (
-                        <tr key={index} className="border-t border-green-100">
-                          <td className="px-4 py-2 text-sm text-gray-900">{item.description}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900">{item.quantity}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900">{item.unitPrice.toLocaleString()} FCFA</td>
-                          <td className="px-4 py-2 text-sm font-medium text-gray-900">{item.total.toLocaleString()} FCFA</td>
-                          <td className="px-4 py-2">
+          {/* Services et prestations existants */}
+          {items.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-medium text-gray-800 mb-4">Services et Produits Facturés</h3>
+              
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Qté</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Prix unitaire</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Total</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {items.map((item, index) => {
+                      const lowStockWarning = getLowStockWarning(item.description);
+                      return (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            <div>
+                              {item.description}
+                              {lowStockWarning && (
+                                <div className="text-xs text-orange-600 mt-1 flex items-center">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  {lowStockWarning}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.unitPrice.toLocaleString()} FCFA</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.total.toLocaleString()} FCFA</td>
+                          <td className="px-4 py-3">
                             <button
                               type="button"
                               onClick={() => removeItem(index)}
                               className="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
+                              title="Supprimer"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Ajouter des éléments */}
+          <div className="bg-green-50 rounded-lg p-4">
+            <h3 className="font-medium text-green-800 mb-4">Ajouter des Éléments à la Facture</h3>
+
+            {/* Onglets */}
+            <div className="flex space-x-1 mb-4 bg-white rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('services')}
+                className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-colors ${
+                  activeTab === 'services'
+                    ? 'bg-green-100 text-green-700 font-medium'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Calendar className="h-4 w-4" />
+                <span>Services Médicaux</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('products')}
+                className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-colors ${
+                  activeTab === 'products'
+                    ? 'bg-green-100 text-green-700 font-medium'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Package className="h-4 w-4" />
+                <span>Produits & Médicaments</span>
+              </button>
+            </div>
+
+            {activeTab === 'services' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Services prédéfinis
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                    {PREDEFINED_SERVICES.map((service, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => selectPredefinedService(service)}
+                        className="text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="text-sm font-medium text-gray-900">{service.description}</div>
+                        <div className="text-xs text-gray-500">{service.unitPrice.toLocaleString()} FCFA</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Ajouter un nouveau service */}
-            <div className="bg-white rounded-lg p-4 border border-green-200">
-              <h4 className="font-medium text-gray-800 mb-3">Ajouter un service</h4>
-              
-              {/* Services prédéfinis */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Services prédéfinis
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {PREDEFINED_SERVICES.map((service, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => selectPredefinedService(service)}
-                      className="text-left p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="text-sm font-medium text-gray-900">{service.description}</div>
-                      <div className="text-xs text-gray-500">{service.unitPrice.toLocaleString()} FCFA</div>
-                    </button>
-                  ))}
+            {activeTab === 'products' && (
+              <div className="space-y-4">
+                {/* Filtres pour produits */}
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher un produit ou médicament..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="all">Toutes catégories</option>
+                    {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Liste des produits */}
+                <div className="bg-white rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
+                  {filteredMedicines.length > 0 ? (
+                    <div className="divide-y divide-gray-200">
+                      {filteredMedicines.map((product) => {
+                        const isLowStock = product.currentStock <= product.minStock;
+                        const categoryIcon = product.category === 'medication' ? Pill : Package;
+                        const CategoryIcon = categoryIcon;
+                        
+                        return (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => selectMedicalProduct(product)}
+                            className="w-full text-left p-4 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start space-x-3 flex-1">
+                                <CategoryIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900">{product.name}</div>
+                                  <div className="text-sm text-gray-600">{product.description}</div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {CATEGORY_LABELS[product.category]} • {product.manufacturer}
+                                  </div>
+                                  {isLowStock && (
+                                    <div className="text-xs text-orange-600 mt-1 flex items-center">
+                                      <AlertTriangle className="h-3 w-3 mr-1" />
+                                      Stock faible: {product.currentStock} {product.unit}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-medium text-gray-900">
+                                  {product.unitPrice.toLocaleString()} FCFA
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  par {product.unit}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Stock: {product.currentStock}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-gray-500">
+                      <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                      <p>Aucun produit trouvé</p>
+                    </div>
+                  )}
                 </div>
               </div>
+            )}
 
+            {/* Formulaire d'ajout manuel */}
+            <div className="bg-white rounded-lg p-4 border border-green-200">
+              <h4 className="font-medium text-gray-800 mb-3">Ou ajouter manuellement</h4>
+              
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="md:col-span-2">
                   <input
                     type="text"
-                    placeholder="Description du service"
+                    placeholder="Description du service/produit"
                     value={newItem.description}
                     onChange={(e) => handleItemChange('description', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -333,7 +591,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                 <div>
                   <input
                     type="number"
-                    placeholder="Prix unitaire"
+                    placeholder="Prix unitaire (FCFA)"
                     min="0"
                     value={newItem.unitPrice}
                     onChange={(e) => handleItemChange('unitPrice', parseFloat(e.target.value) || 0)}
@@ -349,7 +607,8 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                 <button
                   type="button"
                   onClick={addItem}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  disabled={!newItem.description || newItem.quantity <= 0 || newItem.unitPrice <= 0}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Ajouter</span>
@@ -415,6 +674,28 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                 </div>
               </div>
             </div>
+
+            {/* Statistiques des éléments */}
+            {items.length > 0 && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-blue-600">
+                    {items.filter(item => !item.description.includes('(') || item.description.includes('Consultation')).length}
+                  </div>
+                  <div className="text-xs text-blue-600">Services</div>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-purple-600">
+                    {items.filter(item => item.description.includes('(') && !item.description.includes('Consultation')).length}
+                  </div>
+                  <div className="text-xs text-purple-600">Produits</div>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-green-600">{items.length}</div>
+                  <div className="text-xs text-green-600">Total éléments</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Résumé de la facture */}
@@ -424,12 +705,26 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
               <div className="text-sm text-blue-700 space-y-1">
                 <p><strong>Patient:</strong> {selectedPatient?.firstName} {selectedPatient?.lastName}</p>
                 <p><strong>Date:</strong> {new Date(formData.date).toLocaleDateString('fr-FR')}</p>
-                <p><strong>Services:</strong> {items.length} service{items.length > 1 ? 's' : ''}</p>
+                <p><strong>Éléments:</strong> {items.length} élément{items.length > 1 ? 's' : ''}</p>
                 <p><strong>Montant total:</strong> {total.toLocaleString()} FCFA</p>
                 {!invoice && (
                   <p><strong>Numéro de facture:</strong> {generateInvoiceNumber()}</p>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Alertes stock */}
+          {items.some(item => getLowStockWarning(item.description)) && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                <h4 className="font-medium text-orange-800">Alertes Stock</h4>
+              </div>
+              <p className="text-sm text-orange-700">
+                Certains produits facturés ont un stock faible. Pensez à vérifier les niveaux de stock 
+                et à commander si nécessaire.
+              </p>
             </div>
           )}
 
