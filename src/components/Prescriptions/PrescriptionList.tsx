@@ -61,7 +61,7 @@ export function PrescriptionList() {
     return (data || []).filter(record => record.prescriptions && record.prescriptions.length > 0);
   };
 
-  const filteredConsultations = consultationsWithPrescriptions.filter(consultation => {
+  const filteredConsultations = consultations.filter(consultation => {
     const patient = patients.find(p => p.id === consultation.patient_id);
     const doctor = doctors.find(d => d.id === consultation.doctor_id);
     const patientName = patient ? `${patient.first_name} ${patient.last_name}` : '';

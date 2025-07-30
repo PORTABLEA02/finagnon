@@ -295,7 +295,7 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
                     <div className="flex-shrink-0 h-10 w-10">
                       <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                         <span className="text-gray-600 font-medium">
-                          {member.firstName[0]}{member.lastName[0]}
+                          {member.first_name[0]}{member.last_name[0]}
                         </span>
                       </div>
                     </div>

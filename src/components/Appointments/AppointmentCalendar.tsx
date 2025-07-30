@@ -139,7 +139,7 @@ export function AppointmentCalendar() {
               <p className="text-gray-500 mt-2">Chargement des rendez-vous...</p>
             </div>
           ) : 
-          {todayAppointments.length > 0 ? (
+          todayAppointments.length > 0 ? (
             <div className="space-y-4">
               {todayAppointments
                 .sort((a, b) => a.time.localeCompare(b.time))
@@ -210,7 +210,7 @@ export function AppointmentCalendar() {
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">Aucun rendez-vous programmé pour cette date</p>
             </div>
-          )}
+          )
           }
         </div>
       </div>

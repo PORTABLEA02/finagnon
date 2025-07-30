@@ -126,7 +126,7 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
             <p className="text-gray-500 mt-2">Chargement des consultations...</p>
           </div>
         ) : (
-        {filteredConsultations.map((consultation) => (
+        filteredConsultations.map((consultation) => (
           <div
             key={consultation.id}
             className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -199,7 +199,7 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
               </div>
             </div>
           </div>
-        ))}
+        ))
         )}
       </div>
 

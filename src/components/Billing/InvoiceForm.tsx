@@ -6,33 +6,33 @@ import { Invoice, InvoiceItem, Patient, Medicine } from '../../types';
 const MOCK_PATIENTS: Patient[] = [
   {
     id: '1',
-    firstName: 'Jean',
-    lastName: 'Nguema',
-    dateOfBirth: '1985-03-15',
+    first_name: 'Jean',
+    last_name: 'Nguema',
+    date_of_birth: '1985-03-15',
     gender: 'M',
     phone: '+237 690 123 456',
     email: 'jean.nguema@email.com',
     address: 'Yaoundé, Quartier Bastos',
-    emergencyContact: '+237 690 654 321',
-    bloodType: 'A+',
+    emergency_contact: '+237 690 654 321',
+    blood_type: 'A+',
     allergies: ['Pénicilline'],
-    medicalHistory: [],
-    createdAt: '2024-01-15T00:00:00Z'
+    created_at: '2024-01-15T00:00:00Z',
+    updated_at: '2024-01-15T00:00:00Z'
   },
   {
     id: '2',
-    firstName: 'Marie',
-    lastName: 'Atangana',
-    dateOfBirth: '1992-07-22',
+    first_name: 'Marie',
+    last_name: 'Atangana',
+    date_of_birth: '1992-07-22',
     gender: 'F',
     phone: '+237 690 987 654',
     email: 'marie.atangana@email.com',
     address: 'Douala, Akwa',
-    emergencyContact: '+237 690 111 222',
-    bloodType: 'O-',
+    emergency_contact: '+237 690 111 222',
+    blood_type: 'O-',
     allergies: [],
-    medicalHistory: [],
-    createdAt: '2024-01-10T00:00:00Z'
+    created_at: '2024-01-10T00:00:00Z',
+    updated_at: '2024-01-10T00:00:00Z'
   }
 ];
 
@@ -59,28 +59,32 @@ const MOCK_MEDICINES: Medicine[] = [
     name: 'Paracétamol 500mg',
     category: 'medication',
     manufacturer: 'Pharma Cameroun',
-    batchNumber: 'PC2024001',
-    expiryDate: '2025-12-31',
-    currentStock: 50,
-    minStock: 20,
-    unitPrice: 250,
+    batch_number: 'PC2024001',
+    expiry_date: '2025-12-31',
+    current_stock: 50,
+    min_stock: 20,
+    unit_price: 250,
     location: 'Pharmacie - Étagère A1',
     unit: 'boîte',
-    description: 'Antalgique et antipyrétique'
+    description: 'Antalgique et antipyrétique',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
   },
   {
     id: '2',
     name: 'Amoxicilline 250mg',
     category: 'medication',
     manufacturer: 'MediCam',
-    batchNumber: 'MC2024002',
-    expiryDate: '2025-06-30',
-    currentStock: 45,
-    minStock: 30,
-    unitPrice: 180,
+    batch_number: 'MC2024002',
+    expiry_date: '2025-06-30',
+    current_stock: 45,
+    min_stock: 30,
+    unit_price: 180,
     location: 'Pharmacie - Étagère B2',
     unit: 'boîte',
-    description: 'Antibiotique à large spectre'
+    description: 'Antibiotique à large spectre',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
   },
   {
     id: '3',
@@ -168,10 +172,13 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
   );
 
   const [newItem, setNewItem] = useState<InvoiceItem>({
+    id: '',
+    invoice_id: '',
     description: '',
     quantity: 1,
-    unitPrice: 0,
-    total: 0
+    unit_price: 0,
+    total: 0,
+    created_at: ''
   });
 
   const [activeTab, setActiveTab] = useState<'services' | 'products'>('services');
@@ -207,21 +214,24 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
   const handleItemChange = (field: keyof InvoiceItem, value: string | number) => {
     const updatedItem = { ...newItem, [field]: value };
     
-    if (field === 'quantity' || field === 'unitPrice') {
-      updatedItem.total = updatedItem.quantity * updatedItem.unitPrice;
+    if (field === 'quantity' || field === 'unit_price') {
+      updatedItem.total = updatedItem.quantity * updatedItem.unit_price;
     }
     
     setNewItem(updatedItem);
   };
 
   const addItem = () => {
-    if (newItem.description && newItem.quantity > 0 && newItem.unitPrice > 0) {
-      setItems([...items, { ...newItem, total: newItem.quantity * newItem.unitPrice }]);
+    if (newItem.description && newItem.quantity > 0 && newItem.unit_price > 0) {
+      setItems([...items, { ...newItem, total: newItem.quantity * newItem.unit_price }]);
       setNewItem({
+        id: '',
+        invoice_id: '',
         description: '',
         quantity: 1,
-        unitPrice: 0,
-        total: 0
+        unit_price: 0,
+        total: 0,
+        created_at: ''
       });
     }
   };
@@ -234,7 +244,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
     setNewItem({
       ...newItem,
       description: service.description,
-      unitPrice: service.unitPrice,
+      unit_price: service.unitPrice,
       total: newItem.quantity * service.unitPrice
     });
   };
@@ -243,8 +253,8 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
     setNewItem({
       ...newItem,
       description: `${product.name} (${product.unit})`,
-      unitPrice: product.unitPrice,
-      total: newItem.quantity * product.unitPrice
+      unit_price: product.unit_price,
+      total: newItem.quantity * product.unit_price
     });
   };
 
@@ -266,8 +276,8 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
   // Vérifier les produits avec stock faible
   const getLowStockWarning = (productName: string) => {
     const product = MOCK_MEDICINES.find(m => productName.includes(m.name));
-    if (product && product.currentStock <= product.minStock) {
-      return `⚠️ Stock faible: ${product.currentStock} ${product.unit} restant(s)`;
+    if (product && product.current_stock <= product.min_stock) {
+      return `⚠️ Stock faible: ${product.current_stock} ${product.unit} restant(s)`;
     }
     return null;
   };
@@ -312,7 +322,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                   <option value="">Sélectionner un patient</option>
                   {MOCK_PATIENTS.map(patient => (
                     <option key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName}
+                      {patient.first_name} {patient.last_name}
                     </option>
                   ))}
                 </select>
@@ -354,7 +364,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm flex-1">
                     <div>
                       <span className="font-medium text-gray-700">Patient: </span>
-                      <span className="text-gray-900">{selectedPatient.firstName} {selectedPatient.lastName}</span>
+                      <span className="text-gray-900">{selectedPatient?.first_name} {selectedPatient?.last_name}</span>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Téléphone: </span>
@@ -403,7 +413,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.unitPrice.toLocaleString()} FCFA</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.unit_price.toLocaleString()} FCFA</td>
                           <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.total.toLocaleString()} FCFA</td>
                           <td className="px-4 py-3">
                             <button
@@ -510,7 +520,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                   {filteredMedicines.length > 0 ? (
                     <div className="divide-y divide-gray-200">
                       {filteredMedicines.map((product) => {
-                        const isLowStock = product.currentStock <= product.minStock;
+                        const isLowStock = product.current_stock <= product.min_stock;
                         const categoryIcon = product.category === 'medication' ? Pill : Package;
                         const CategoryIcon = categoryIcon;
                         
@@ -533,20 +543,20 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                                   {isLowStock && (
                                     <div className="text-xs text-orange-600 mt-1 flex items-center">
                                       <AlertTriangle className="h-3 w-3 mr-1" />
-                                      Stock faible: {product.currentStock} {product.unit}
+                                      Stock faible: {product.current_stock} {product.unit}
                                     </div>
                                   )}
                                 </div>
                               </div>
                               <div className="text-right">
                                 <div className="font-medium text-gray-900">
-                                  {product.unitPrice.toLocaleString()} FCFA
+                                  {product.unit_price.toLocaleString()} FCFA
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   par {product.unit}
                                 </div>
                                 <div className="text-xs text-gray-500 mt-1">
-                                  Stock: {product.currentStock}
+                                  Stock: {product.current_stock}
                                 </div>
                               </div>
                             </div>
@@ -593,8 +603,8 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                     type="number"
                     placeholder="Prix unitaire (FCFA)"
                     min="0"
-                    value={newItem.unitPrice}
-                    onChange={(e) => handleItemChange('unitPrice', parseFloat(e.target.value) || 0)}
+                    value={newItem.unit_price}
+                    onChange={(e) => handleItemChange('unit_price', parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
@@ -602,12 +612,12 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
               
               <div className="flex items-center justify-between mt-3">
                 <div className="text-sm text-gray-600">
-                  Total: <span className="font-medium">{(newItem.quantity * newItem.unitPrice).toLocaleString()} FCFA</span>
+                  Total: <span className="font-medium">{(newItem.quantity * newItem.unit_price).toLocaleString()} FCFA</span>
                 </div>
                 <button
                   type="button"
                   onClick={addItem}
-                  disabled={!newItem.description || newItem.quantity <= 0 || newItem.unitPrice <= 0}
+                  disabled={!newItem.description || newItem.quantity <= 0 || newItem.unit_price <= 0}
                   className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="h-4 w-4" />
@@ -703,7 +713,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
             <div className="bg-blue-50 rounded-lg p-4">
               <h3 className="font-medium text-blue-800 mb-2">Résumé de la Facture</h3>
               <div className="text-sm text-blue-700 space-y-1">
-                <p><strong>Patient:</strong> {selectedPatient?.firstName} {selectedPatient?.lastName}</p>
+                <p><strong>Patient:</strong> {selectedPatient?.first_name} {selectedPatient?.last_name}</p>
                 <p><strong>Date:</strong> {new Date(formData.date).toLocaleDateString('fr-FR')}</p>
                 <p><strong>Éléments:</strong> {items.length} élément{items.length > 1 ? 's' : ''}</p>
                 <p><strong>Montant total:</strong> {total.toLocaleString()} FCFA</p>

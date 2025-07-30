@@ -4,8 +4,8 @@ import { Invoice, Patient } from '../../types';
 
 // Mock patients data
 const MOCK_PATIENTS = [
-  { id: '1', firstName: 'Jean', lastName: 'Nguema', phone: '+237 690 123 456', email: 'jean.nguema@email.com', address: 'Yaoundé, Quartier Bastos' },
-  { id: '2', firstName: 'Marie', lastName: 'Atangana', phone: '+237 690 987 654', email: 'marie.atangana@email.com', address: 'Douala, Akwa' }
+  { id: '1', first_name: 'Jean', last_name: 'Nguema', phone: '+237 690 123 456', email: 'jean.nguema@email.com', address: 'Yaoundé, Quartier Bastos' },
+  { id: '2', first_name: 'Marie', last_name: 'Atangana', phone: '+237 690 987 654', email: 'marie.atangana@email.com', address: 'Douala, Akwa' }
 ];
 
 interface InvoiceDetailProps {
@@ -339,7 +339,7 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
             <div class="patient-info">
               <div class="info-title">Informations Patient</div>
               <div class="info-item">
-                <span class="info-label">Nom complet:</span> ${patient?.firstName} ${patient?.lastName}
+                <span class="info-label">Nom complet:</span> ${patient?.first_name} ${patient?.last_name}
               </div>
               <div class="info-item">
                 <span class="info-label">Téléphone:</span> ${patient?.phone}
@@ -371,7 +371,7 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
                 <tr>
                   <td>${item.description}</td>
                   <td class="text-center">${item.quantity}</td>
-                  <td class="text-right">${item.unitPrice.toLocaleString()} FCFA</td>
+                  <td class="text-right">${item.unit_price.toLocaleString()} FCFA</td>
                   <td class="text-right">${item.total.toLocaleString()} FCFA</td>
                 </tr>
               `).join('')}
@@ -464,7 +464,7 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
               <div className="space-y-3">
                 <div>
                   <span className="text-sm font-medium text-gray-700">Numéro:</span>
-                  <p className="text-gray-900 font-mono text-lg">{invoice.id}</p>
+                  <p className="text-gray-900 font-medium">{patient?.first_name} {patient?.last_name}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-700">Date d'émission:</span>
@@ -553,7 +553,7 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-900">{item.description}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.quantity}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">{item.unitPrice.toLocaleString()} FCFA</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">{item.unit_price.toLocaleString()} FCFA</td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">{item.total.toLocaleString()} FCFA</td>
                     </tr>
                   ))}

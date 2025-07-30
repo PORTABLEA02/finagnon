@@ -170,7 +170,7 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
                     <div className="flex-shrink-0 h-10 w-10">
                       <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                         <span className="text-blue-600 font-medium">
-                          {patient.firstName[0]}{patient.lastName[0]}
+                          {patient.first_name[0]}{patient.last_name[0]}
                         </span>
                       </div>
                     </div>

@@ -4,8 +4,8 @@ import { Invoice } from '../../types';
 
 // Mock patients data
 const MOCK_PATIENTS = [
-  { id: '1', firstName: 'Jean', lastName: 'Nguema', phone: '+237 690 123 456' },
-  { id: '2', firstName: 'Marie', lastName: 'Atangana', phone: '+237 690 987 654' }
+  { id: '1', first_name: 'Jean', last_name: 'Nguema', phone: '+237 690 123 456' },
+  { id: '2', first_name: 'Marie', last_name: 'Atangana', phone: '+237 690 987 654' }
 ];
 
 interface PaymentFormProps {
@@ -94,7 +94,7 @@ export function PaymentForm({ invoice, onClose, onSave }: PaymentFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="text-sm font-medium text-gray-700">Patient:</span>
-                <p className="text-gray-900 font-medium">{patient?.firstName} {patient?.lastName}</p>
+                <p className="text-gray-900 font-medium">{patient?.first_name} {patient?.last_name}</p>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">Montant total:</span>
