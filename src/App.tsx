@@ -10,6 +10,7 @@ import { AppointmentCalendar } from './components/Appointments/AppointmentCalend
 import { InventoryManager } from './components/Inventory/InventoryManager';
 import { ConsultationsManager } from './components/Consultations';
 import { PrescriptionList } from './components/Prescriptions';
+import { SettingsManager } from './components/Settings';
 import { Patient } from './types';
 
 function Dashboard() {
@@ -116,12 +117,7 @@ function Dashboard() {
         );
 
       case 'settings':
-        return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Paramètres</h2>
-            <p className="text-gray-600">Module de paramètres en cours de développement...</p>
-          </div>
-        );
+        return <SettingsManager />;
 
       default:
         return (
