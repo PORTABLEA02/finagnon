@@ -1,38 +1,14 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, Plus, User, Phone } from 'lucide-react';
-import { Appointment } from '../../types';
+import { Database } from '../../lib/database.types';
+import { AppointmentService } from '../../services/appointments';
+import { PatientService } from '../../services/patients';
+import { ProfileService } from '../../services/profiles';
 import { AppointmentForm } from './AppointmentForm';
 
-// Mock data
-const MOCK_APPOINTMENTS: Appointment[] = [
-  {
-    id: '1',
-    patientId: '1',
-    doctorId: '2',
-    date: '2024-01-20',
-    time: '09:00',
-    duration: 30,
-    reason: 'Consultation de routine',
-    status: 'confirmed',
-    createdAt: '2024-01-15T00:00:00Z'
-  },
-  {
-    id: '2',
-    patientId: '2',
-    doctorId: '2',
-    date: '2024-01-20',
-    time: '10:30',
-    duration: 45,
-    reason: 'Contrôle cardiologique',
-    status: 'scheduled',
-    createdAt: '2024-01-15T00:00:00Z'
-  }
-];
-
-const MOCK_PATIENTS = [
-  { id: '1', firstName: 'Jean', lastName: 'Nguema', phone: '+237 690 123 456' },
-  { id: '2', firstName: 'Marie', lastName: 'Atangana', phone: '+237 690 987 654' }
-];
+type Appointment = Database['public']['Tables']['appointments']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 const STATUS_COLORS = {
   scheduled: 'bg-blue-100 text-blue-800',
@@ -52,19 +28,42 @@ const STATUS_LABELS = {
 
 export function AppointmentCalendar() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [appointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+
+  // Charger les données au montage du composant
+  React.useEffect(() => {
+    loadData();
+  }, [selectedDate]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [appointmentsData, patientsData] = await Promise.all([
+        AppointmentService.getByDate(selectedDate),
+        PatientService.getAll()
+      ]);
+      setAppointments(appointmentsData);
+      setPatients(patientsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const todayAppointments = appointments.filter(apt => apt.date === selectedDate);
 
   const getPatientName = (patientId: string) => {
-    const patient = MOCK_PATIENTS.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : 'Patient inconnu';
+    const patient = patients.find(p => p.id === patientId);
+    return patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu';
   };
 
   const getPatientPhone = (patientId: string) => {
-    const patient = MOCK_PATIENTS.find(p => p.id === patientId);
+    const patient = patients.find(p => p.id === patientId);
     return patient?.phone || '';
   };
 
@@ -79,10 +78,22 @@ export function AppointmentCalendar() {
   };
 
   const handleSaveAppointment = (appointmentData: Partial<Appointment>) => {
-    console.log('Saving appointment:', appointmentData);
-    // TODO: Implement save logic
-    setShowAppointmentForm(false);
-    setEditingAppointment(null);
+    const saveAppointment = async () => {
+      try {
+        if (editingAppointment) {
+          await AppointmentService.update(editingAppointment.id, appointmentData);
+        } else {
+          await AppointmentService.create(appointmentData as any);
+        }
+        await loadData();
+        setShowAppointmentForm(false);
+        setEditingAppointment(null);
+      } catch (error) {
+        console.error('Error saving appointment:', error);
+        alert('Erreur lors de la sauvegarde du rendez-vous');
+      }
+    };
+    saveAppointment();
   };
 
   const handleCloseForm = () => {
@@ -122,6 +133,12 @@ export function AppointmentCalendar() {
         </div>
 
         <div className="p-6">
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Chargement des rendez-vous...</p>
+            </div>
+          ) : 
           {todayAppointments.length > 0 ? (
             <div className="space-y-4">
               {todayAppointments
@@ -146,14 +163,14 @@ export function AppointmentCalendar() {
                         <div className="flex items-center space-x-2">
                           <User className="h-4 w-4 text-gray-400" />
                           <span className="font-medium text-gray-900">
-                            {getPatientName(appointment.patientId)}
+                            {getPatientName(appointment.patient_id)}
                           </span>
                         </div>
 
                         <div className="flex items-center space-x-2">
                           <Phone className="h-4 w-4 text-gray-400" />
                           <span className="text-sm text-gray-600">
-                            {getPatientPhone(appointment.patientId)}
+                            {getPatientPhone(appointment.patient_id)}
                           </span>
                         </div>
                       </div>
@@ -194,6 +211,7 @@ export function AppointmentCalendar() {
               <p className="text-gray-500">Aucun rendez-vous programmé pour cette date</p>
             </div>
           )}
+          }
         </div>
       </div>
 

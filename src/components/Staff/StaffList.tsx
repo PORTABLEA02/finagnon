@@ -1,116 +1,14 @@
 import React, { useState } from 'react';
 import { Search, Plus, Eye, Edit, Trash2, Shield, User, Mail, Phone, Calendar, Clock, UserCheck, UserX } from 'lucide-react';
-import { User as UserType } from '../../types';
+import { Database } from '../../lib/database.types';
+import { ProfileService } from '../../services/profiles';
 
-// Extended mock data for staff
-const MOCK_STAFF: (UserType & {
-  department: string;
-  hireDate: string;
-  salary: number;
-  workSchedule: string;
-  emergencyContact: string;
-  address: string;
-  status: 'active' | 'inactive' | 'on-leave';
-  lastLogin: string;
-})[] = [
-  {
-    id: '1',
-    email: 'admin@clinique.com',
-    firstName: 'Dr. Marie',
-    lastName: 'Durand',
-    role: 'admin',
-    phone: '+237 690 000 001',
-    isActive: true,
-    createdAt: '2024-01-01T00:00:00Z',
-    department: 'Administration',
-    hireDate: '2023-01-15',
-    salary: 2500000,
-    workSchedule: 'Temps plein',
-    emergencyContact: '+237 690 000 011',
-    address: 'Yaoundé, Quartier Bastos',
-    status: 'active',
-    lastLogin: '2024-01-20T08:30:00Z'
-  },
-  {
-    id: '2',
-    email: 'dr.martin@clinique.com',
-    firstName: 'Dr. Paul',
-    lastName: 'Martin',
-    role: 'doctor',
-    speciality: 'Cardiologie',
-    phone: '+237 690 000 002',
-    isActive: true,
-    createdAt: '2024-01-01T00:00:00Z',
-    department: 'Médecine',
-    hireDate: '2023-03-01',
-    salary: 3000000,
-    workSchedule: 'Temps plein',
-    emergencyContact: '+237 690 000 012',
-    address: 'Yaoundé, Quartier Melen',
-    status: 'active',
-    lastLogin: '2024-01-20T07:45:00Z'
-  },
-  {
-    id: '3',
-    email: 'secretaire@clinique.com',
-    firstName: 'Sophie',
-    lastName: 'Mbala',
-    role: 'secretary',
-    phone: '+237 690 000 003',
-    isActive: true,
-    createdAt: '2024-01-01T00:00:00Z',
-    department: 'Accueil',
-    hireDate: '2023-06-15',
-    salary: 800000,
-    workSchedule: 'Temps plein',
-    emergencyContact: '+237 690 000 013',
-    address: 'Yaoundé, Quartier Nlongkak',
-    status: 'active',
-    lastLogin: '2024-01-19T17:30:00Z'
-  },
-  {
-    id: '4',
-    email: 'dr.kouam@clinique.com',
-    firstName: 'Dr. Jean',
-    lastName: 'Kouam',
-    role: 'doctor',
-    speciality: 'Médecine générale',
-    phone: '+237 690 000 004',
-    isActive: false,
-    createdAt: '2024-01-15T00:00:00Z',
-    department: 'Médecine',
-    hireDate: '2023-09-01',
-    salary: 2200000,
-    workSchedule: 'Temps partiel',
-    emergencyContact: '+237 690 000 014',
-    address: 'Douala, Akwa',
-    status: 'on-leave',
-    lastLogin: '2024-01-10T16:20:00Z'
-  },
-  {
-    id: '5',
-    email: 'infirmiere@clinique.com',
-    firstName: 'Claire',
-    lastName: 'Nkomo',
-    role: 'secretary', // Using secretary role as we don't have nurse role
-    phone: '+237 690 000 005',
-    isActive: true,
-    createdAt: '2024-01-01T00:00:00Z',
-    department: 'Soins infirmiers',
-    hireDate: '2023-04-10',
-    salary: 1200000,
-    workSchedule: 'Temps plein',
-    emergencyContact: '+237 690 000 015',
-    address: 'Yaoundé, Quartier Emana',
-    status: 'active',
-    lastLogin: '2024-01-20T06:00:00Z'
-  }
-];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface StaffListProps {
-  onSelectStaff: (staff: UserType) => void;
+  onSelectStaff: (staff: Profile) => void;
   onNewStaff: () => void;
-  onEditStaff: (staff: UserType) => void;
+  onEditStaff: (staff: Profile) => void;
 }
 
 export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListProps) {
@@ -118,21 +16,41 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [staff, setStaff] = useState(MOCK_STAFF);
+  const [staff, setStaff] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Charger les données au montage du composant
+  React.useEffect(() => {
+    loadStaff();
+  }, []);
+
+  const loadStaff = async () => {
+    try {
+      setLoading(true);
+      const data = await ProfileService.getAll();
+      setStaff(data);
+    } catch (error) {
+      console.error('Error loading staff:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredStaff = staff.filter(member => {
-    const matchesSearch = `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.department.toLowerCase().includes(searchTerm.toLowerCase());
+                         (member.department || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRole = selectedRole === 'all' || member.role === selectedRole;
     const matchesDepartment = selectedDepartment === 'all' || member.department === selectedDepartment;
-    const matchesStatus = selectedStatus === 'all' || member.status === selectedStatus;
+    const matchesStatus = selectedStatus === 'all' || 
+      (selectedStatus === 'active' && member.is_active) ||
+      (selectedStatus === 'inactive' && !member.is_active);
     
     return matchesSearch && matchesRole && matchesDepartment && matchesStatus;
   });
 
-  const departments = [...new Set(staff.map(s => s.department))];
+  const departments = [...new Set(staff.map(s => s.department).filter(Boolean))];
 
   const getRoleLabel = (role: string) => {
     const labels = {
@@ -171,20 +89,25 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
   };
 
   const handleToggleStatus = (staffId: string) => {
-    setStaff(staff.map(member => 
-      member.id === staffId 
-        ? { 
-            ...member, 
-            status: member.status === 'active' ? 'inactive' : 'active',
-            isActive: member.status !== 'active'
-          }
-        : member
-    ));
+    const updateStatus = async () => {
+      try {
+        const member = staff.find(s => s.id === staffId);
+        if (member) {
+          await ProfileService.update(staffId, { is_active: !member.is_active });
+          await loadStaff();
+        }
+      } catch (error) {
+        console.error('Error updating staff status:', error);
+        alert('Erreur lors de la mise à jour du statut');
+      }
+    };
+    updateStatus();
   };
 
   const handleDeleteStaff = (staffId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce membre du personnel ?')) {
-      setStaff(staff.filter(member => member.id !== staffId));
+      // TODO: Implement delete functionality
+      console.log('Delete staff:', staffId);
     }
   };
 
@@ -224,6 +147,13 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {loading ? (
+            <div className="col-span-4 text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Chargement des statistiques...</p>
+            </div>
+          ) : (
+            <>
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -239,7 +169,7 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
               <div>
                 <p className="text-sm font-medium text-green-600">Actifs</p>
                 <p className="text-2xl font-bold text-green-900">
-                  {staff.filter(s => s.status === 'active').length}
+                  {staff.filter(s => s.is_active).length}
                 </p>
               </div>
               <UserCheck className="h-8 w-8 text-green-500" />
@@ -261,14 +191,16 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
           <div className="bg-yellow-50 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-yellow-600">En congé</p>
+                <p className="text-sm font-medium text-yellow-600">Inactifs</p>
                 <p className="text-2xl font-bold text-yellow-900">
-                  {staff.filter(s => s.status === 'on-leave').length}
+                  {staff.filter(s => !s.is_active).length}
                 </p>
               </div>
               <UserX className="h-8 w-8 text-yellow-500" />
             </div>
           </div>
+            </>
+          )}
         </div>
 
         {/* Filters */}
@@ -323,6 +255,12 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
 
       {/* Staff Table */}
       <div className="overflow-x-auto">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement du personnel...</p>
+          </div>
+        ) : (
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -363,7 +301,7 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {member.firstName} {member.lastName}
+                        {member.first_name} {member.last_name}
                       </div>
                       {member.speciality && (
                         <div className="text-sm text-gray-500">
@@ -371,7 +309,7 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
                         </div>
                       )}
                       <div className="text-xs text-gray-400">
-                        Embauché le {new Date(member.hireDate).toLocaleDateString('fr-FR')}
+                        Embauché le {member.hire_date ? new Date(member.hire_date).toLocaleDateString('fr-FR') : 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -390,8 +328,8 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
-                    <div className="font-medium">{member.department}</div>
-                    <div className="text-xs text-gray-500">{member.workSchedule}</div>
+                    <div className="font-medium">{member.department || 'Non défini'}</div>
+                    <div className="text-xs text-gray-500">{member.work_schedule || 'Temps plein'}</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -402,15 +340,17 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => handleToggleStatus(member.id)}
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${getStatusColor(member.status)}`}
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                      member.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}
                   >
-                    {getStatusLabel(member.status)}
+                    {member.is_active ? 'Actif' : 'Inactif'}
                   </button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4" />
-                    <span>{formatLastLogin(member.lastLogin)}</span>
+                    <span>{member.updated_at ? formatLastLogin(member.updated_at) : 'Jamais'}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -442,6 +382,7 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
       {filteredStaff.length === 0 && (

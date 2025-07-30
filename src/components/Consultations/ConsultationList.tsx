@@ -1,51 +1,11 @@
 import React, { useState } from 'react';
 import { Search, Plus, Eye, Edit, Calendar, User, Clock, FileText, Tag } from 'lucide-react';
-import { MedicalRecord, Patient } from '../../types';
+import { Database } from '../../lib/database.types';
+import { supabase } from '../../lib/supabase';
+import { PatientService } from '../../services/patients';
 
-// Mock data
-const MOCK_CONSULTATIONS: MedicalRecord[] = [
-  {
-    id: '1',
-    patientId: '1',
-    doctorId: '2',
-    date: '2024-01-20',
-    type: 'specialist',
-    reason: 'Douleurs thoraciques',
-    symptoms: 'Douleur oppressante au niveau du thorax, essoufflement léger',
-    diagnosis: 'Suspicion d\'angine de poitrine',
-    treatment: 'Repos, surveillance, examens complémentaires',
-    prescription: [
-      {
-        medication: 'Aspirine 75mg',
-        dosage: '1 comprimé',
-        frequency: '1 fois par jour',
-        duration: '30 jours',
-        instructions: 'À prendre le matin avec un verre d\'eau'
-      }
-    ],
-    notes: 'Patient anxieux, antécédents familiaux de maladie cardiaque',
-    attachments: []
-  },
-  {
-    id: '2',
-    patientId: '2',
-    doctorId: '2',
-    date: '2024-01-19',
-    type: 'followup',
-    reason: 'Contrôle de routine',
-    symptoms: 'Aucun symptôme particulier',
-    diagnosis: 'État général satisfaisant',
-    treatment: 'Poursuite du traitement habituel',
-    prescription: [],
-    notes: 'Tension artérielle normale, poids stable',
-    attachments: []
-  }
-];
-
-const MOCK_PATIENTS = [
-  { id: '1', firstName: 'Jean', lastName: 'Nguema', phone: '+237 690 123 456' },
-  { id: '2', firstName: 'Marie', lastName: 'Atangana', phone: '+237 690 987 654' }
-];
+type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
 
 interface ConsultationListProps {
   onSelectConsultation: (consultation: MedicalRecord) => void;
@@ -54,19 +14,59 @@ interface ConsultationListProps {
 
 export function ConsultationList({ onSelectConsultation, onNewConsultation }: ConsultationListProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [consultations] = useState<MedicalRecord[]>(MOCK_CONSULTATIONS);
+  const [consultations, setConsultations] = useState<MedicalRecord[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Charger les données au montage du composant
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [consultationsData, patientsData] = await Promise.all([
+        getMedicalRecords(),
+        PatientService.getAll()
+      ]);
+      setConsultations(consultationsData);
+      setPatients(patientsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getMedicalRecords = async () => {
+    const { data, error } = await supabase
+      .from('medical_records')
+      .select(`
+        *,
+        prescriptions(*)
+      `)
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching medical records:', error);
+      throw error;
+    }
+
+    return data || [];
+  };
 
   const filteredConsultations = consultations.filter(consultation => {
-    const patient = MOCK_PATIENTS.find(p => p.id === consultation.patientId);
-    const patientName = patient ? `${patient.firstName} ${patient.lastName}` : '';
+    const patient = patients.find(p => p.id === consultation.patient_id);
+    const patientName = patient ? `${patient.first_name} ${patient.last_name}` : '';
     return patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
            consultation.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
            consultation.diagnosis.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const getPatientName = (patientId: string) => {
-    const patient = MOCK_PATIENTS.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : 'Patient inconnu';
+    const patient = patients.find(p => p.id === patientId);
+    return patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu';
   };
 
   const getConsultationTypeLabel = (type: string) => {
@@ -120,6 +120,12 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
       </div>
 
       <div className="divide-y divide-gray-200">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement des consultations...</p>
+          </div>
+        ) : (
         {filteredConsultations.map((consultation) => (
           <div
             key={consultation.id}
@@ -132,7 +138,7 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-gray-400" />
                     <span className="font-medium text-gray-900">
-                      {getPatientName(consultation.patientId)}
+                      {getPatientName(consultation.patient_id)}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -158,11 +164,11 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
                     <span className="text-sm font-medium text-gray-700">Diagnostic: </span>
                     <span className="text-sm text-gray-900">{consultation.diagnosis}</span>
                   </div>
-                  {consultation.prescription.length > 0 && (
+                  {consultation.prescriptions && consultation.prescriptions.length > 0 && (
                     <div className="flex items-center space-x-2">
                       <FileText className="h-4 w-4 text-green-500" />
                       <span className="text-sm text-green-600">
-                        {consultation.prescription.length} médicament(s) prescrit(s)
+                        {consultation.prescriptions.length} médicament(s) prescrit(s)
                       </span>
                     </div>
                   )}
@@ -194,6 +200,7 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
             </div>
           </div>
         ))}
+        )}
       </div>
 
       {filteredConsultations.length === 0 && (

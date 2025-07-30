@@ -29,47 +29,7 @@ function Dashboard() {
           <div className="space-y-6">
             <DashboardStats />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Prochains Rendez-vous</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-800">Jean Nguema</p>
-                      <p className="text-sm text-gray-600">09:00 - Consultation routine</p>
-                    </div>
-                    <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      Confirmé
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-800">Marie Atangana</p>
-                      <p className="text-sm text-gray-600">10:30 - Contrôle cardiologique</p>
-                    </div>
-                    <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                      Planifié
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Activités Récentes</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <p className="text-sm text-gray-600">Nouveau patient enregistré</p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <p className="text-sm text-gray-600">RDV confirmé pour demain</p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <p className="text-sm text-gray-600">Stock faible: Paracétamol</p>
-                  </div>
-                </div>
-              </div>
+              {/* Les widgets seront ajoutés plus tard avec des données réelles */}
             </div>
           </div>
         );
@@ -92,8 +52,6 @@ function Dashboard() {
                   setEditingPatient(null);
                 }}
                 onSave={(patientData) => {
-                  console.log('Saving patient:', patientData);
-                  // TODO: Implement save logic
                   setShowPatientForm(false);
                   setEditingPatient(null);
                 }}

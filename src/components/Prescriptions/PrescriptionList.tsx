@@ -1,126 +1,79 @@
 import React, { useState } from 'react';
 import { Search, Printer, Eye, Calendar, User, Pill, FileText, Filter } from 'lucide-react';
-import { MedicalRecord, Patient } from '../../types';
+import { Database } from '../../lib/database.types';
+import { supabase } from '../../lib/supabase';
+import { PatientService } from '../../services/patients';
+import { ProfileService } from '../../services/profiles';
 import { PrescriptionDetail } from './PrescriptionDetail';
 
-// Mock data - consultations avec prescriptions
-const MOCK_CONSULTATIONS_WITH_PRESCRIPTIONS: MedicalRecord[] = [
-  {
-    id: '1',
-    patientId: '1',
-    doctorId: '2',
-    date: '2024-01-20',
-    type: 'specialist',
-    reason: 'Douleurs thoraciques',
-    symptoms: 'Douleur oppressante au niveau du thorax, essoufflement léger',
-    diagnosis: 'Suspicion d\'angine de poitrine',
-    treatment: 'Repos, surveillance, examens complémentaires',
-    prescription: [
-      {
-        medication: 'Aspirine 75mg',
-        dosage: '1 comprimé',
-        frequency: '1 fois par jour',
-        duration: '30 jours',
-        instructions: 'À prendre le matin avec un verre d\'eau'
-      },
-      {
-        medication: 'Atorvastatine 20mg',
-        dosage: '1 comprimé',
-        frequency: '1 fois par jour le soir',
-        duration: '90 jours',
-        instructions: 'À prendre après le dîner'
-      }
-    ],
-    notes: 'Patient anxieux, antécédents familiaux de maladie cardiaque',
-    attachments: []
-  },
-  {
-    id: '2',
-    patientId: '2',
-    doctorId: '3',
-    date: '2024-01-19',
-    type: 'general',
-    reason: 'Infection respiratoire',
-    symptoms: 'Toux, fièvre, maux de gorge',
-    diagnosis: 'Bronchite aiguë',
-    treatment: 'Antibiotiques et repos',
-    prescription: [
-      {
-        medication: 'Amoxicilline 500mg',
-        dosage: '1 gélule',
-        frequency: '3 fois par jour',
-        duration: '7 jours',
-        instructions: 'À prendre avec les repas'
-      },
-      {
-        medication: 'Paracétamol 1000mg',
-        dosage: '1 comprimé',
-        frequency: 'Toutes les 6h si besoin',
-        duration: '5 jours',
-        instructions: 'En cas de fièvre ou douleur'
-      }
-    ],
-    notes: 'Revoir dans 1 semaine si pas d\'amélioration',
-    attachments: []
-  },
-  {
-    id: '3',
-    patientId: '1',
-    doctorId: '2',
-    date: '2024-01-15',
-    type: 'followup',
-    reason: 'Suivi hypertension',
-    symptoms: 'Aucun symptôme particulier',
-    diagnosis: 'Hypertension artérielle contrôlée',
-    treatment: 'Poursuite du traitement antihypertenseur',
-    prescription: [
-      {
-        medication: 'Lisinopril 10mg',
-        dosage: '1 comprimé',
-        frequency: '1 fois par jour le matin',
-        duration: '90 jours',
-        instructions: 'À prendre à jeun'
-      }
-    ],
-    notes: 'Tension bien contrôlée, continuer le traitement',
-    attachments: []
-  }
-];
-
-const MOCK_PATIENTS = [
-  { id: '1', firstName: 'Jean', lastName: 'Nguema', phone: '+237 690 123 456', dateOfBirth: '1985-03-15' },
-  { id: '2', firstName: 'Marie', lastName: 'Atangana', phone: '+237 690 987 654', dateOfBirth: '1992-07-22' }
-];
-
-const MOCK_DOCTORS = [
-  { id: '2', firstName: 'Dr. Paul', lastName: 'Martin', speciality: 'Cardiologie' },
-  { id: '3', firstName: 'Dr. Sophie', lastName: 'Dubois', speciality: 'Médecine générale' }
-];
+type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export function PrescriptionList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [selectedDoctor, setSelectedDoctor] = useState('all');
-  const [selectedConsultation, setSelectedConsultation] = useState<MedicalRecord | null>(null);
+  const [selectedConsultation, setSelectedConsultation] = useState<any>(null);
+  const [consultations, setConsultations] = useState<any[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [doctors, setDoctors] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filtrer seulement les consultations avec prescriptions
-  const consultationsWithPrescriptions = MOCK_CONSULTATIONS_WITH_PRESCRIPTIONS.filter(
-    consultation => consultation.prescription.length > 0
-  );
+  // Charger les données au montage du composant
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [consultationsData, patientsData, doctorsData] = await Promise.all([
+        getMedicalRecordsWithPrescriptions(),
+        PatientService.getAll(),
+        ProfileService.getDoctors()
+      ]);
+      setConsultations(consultationsData);
+      setPatients(patientsData);
+      setDoctors(doctorsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getMedicalRecordsWithPrescriptions = async () => {
+    const { data, error } = await supabase
+      .from('medical_records')
+      .select(`
+        *,
+        prescriptions(*)
+      `)
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching medical records with prescriptions:', error);
+      throw error;
+    }
+
+    // Filtrer seulement les consultations avec prescriptions
+    return (data || []).filter(record => record.prescriptions && record.prescriptions.length > 0);
+  };
 
   const filteredConsultations = consultationsWithPrescriptions.filter(consultation => {
-    const patient = MOCK_PATIENTS.find(p => p.id === consultation.patientId);
-    const doctor = MOCK_DOCTORS.find(d => d.id === consultation.doctorId);
-    const patientName = patient ? `${patient.firstName} ${patient.lastName}` : '';
-    const doctorName = doctor ? `${doctor.firstName} ${doctor.lastName}` : '';
+    const patient = patients.find(p => p.id === consultation.patient_id);
+    const doctor = doctors.find(d => d.id === consultation.doctor_id);
+    const patientName = patient ? `${patient.first_name} ${patient.last_name}` : '';
+    const doctorName = doctor ? `${doctor.first_name} ${doctor.last_name}` : '';
 
     const matchesSearch = patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         consultation.prescription.some(p => 
+                         consultation.prescriptions.some((p: any) => 
                            p.medication.toLowerCase().includes(searchTerm.toLowerCase())
                          );
 
-    const matchesDoctor = selectedDoctor === 'all' || consultation.doctorId === selectedDoctor;
+    const matchesDoctor = selectedDoctor === 'all' || consultation.doctor_id === selectedDoctor;
 
     let matchesPeriod = true;
     if (selectedPeriod !== 'all') {
@@ -145,11 +98,11 @@ export function PrescriptionList() {
   });
 
   const getPatientInfo = (patientId: string) => {
-    return MOCK_PATIENTS.find(p => p.id === patientId);
+    return patients.find(p => p.id === patientId);
   };
 
   const getDoctorInfo = (doctorId: string) => {
-    return MOCK_DOCTORS.find(d => d.id === doctorId);
+    return doctors.find(d => d.id === doctorId);
   };
 
   const handlePrintPrescription = (consultation: MedicalRecord) => {
@@ -178,8 +131,8 @@ export function PrescriptionList() {
   };
 
   const generatePrintContent = (consultation: MedicalRecord) => {
-    const patient = getPatientInfo(consultation.patientId);
-    const doctor = getDoctorInfo(consultation.doctorId);
+    const patient = getPatientInfo(consultation.patient_id);
+    const doctor = getDoctorInfo(consultation.doctor_id);
     const currentDate = new Date().toLocaleDateString('fr-FR');
     const currentTime = new Date().toLocaleTimeString('fr-FR');
 
@@ -195,7 +148,7 @@ export function PrescriptionList() {
       return age;
     };
 
-    const patientAge = patient ? calculateAge(patient.dateOfBirth) : 'N/A';
+    const patientAge = patient ? calculateAge(patient.date_of_birth) : 'N/A';
 
     return `
       <!DOCTYPE html>
@@ -474,7 +427,7 @@ export function PrescriptionList() {
             <div class="patient-info">
               <div class="info-title">Informations Patient</div>
               <div class="info-item">
-                <span class="info-label">Nom complet:</span> ${patient?.firstName} ${patient?.lastName}
+                <span class="info-label">Nom complet:</span> ${patient?.first_name} ${patient?.last_name}
               </div>
               <div class="info-item">
                 <span class="info-label">Âge:</span> ${patientAge} ans
@@ -487,7 +440,7 @@ export function PrescriptionList() {
             <div class="doctor-info">
               <div class="info-title">Médecin Prescripteur</div>
               <div class="info-item">
-                <span class="info-label">Nom:</span> ${doctor?.firstName} ${doctor?.lastName}
+                <span class="info-label">Nom:</span> ${doctor?.first_name} ${doctor?.last_name}
               </div>
               <div class="info-item">
                 <span class="info-label">Spécialité:</span> ${doctor?.speciality}
@@ -501,7 +454,7 @@ export function PrescriptionList() {
           <div class="prescription-section">
             <div class="prescription-title">Ordonnance Médicale</div>
             
-            ${consultation.prescription.map((prescription, index) => `
+            ${consultation.prescriptions.map((prescription: any, index: number) => `
               <div class="prescription-item">
                 <div class="medication-header">
                   <div class="medication-number">${index + 1}</div>
@@ -537,13 +490,13 @@ export function PrescriptionList() {
             <div class="signature-box">
               <div class="signature-line"></div>
               <div class="signature-label">Signature du patient</div>
-              <div class="signature-name">${patient?.firstName} ${patient?.lastName}</div>
+              <div class="signature-name">${patient?.first_name} ${patient?.last_name}</div>
             </div>
             
             <div class="signature-box">
               <div class="signature-line"></div>
               <div class="signature-label">Signature du médecin</div>
-              <div class="signature-name">${doctor?.firstName} ${doctor?.lastName}</div>
+              <div class="signature-name">${doctor?.first_name} ${doctor?.last_name}</div>
             </div>
           </div>
 
@@ -574,10 +527,10 @@ export function PrescriptionList() {
               </div>
               <div className="text-right">
                 <div className="text-sm font-medium text-gray-800">
-                  {filteredConsultations.length} ordonnances
+                  {consultations.length} ordonnances
                 </div>
                 <div className="text-xs text-gray-500">
-                  {filteredConsultations.reduce((total, c) => total + c.prescription.length, 0)} médicaments
+                  {consultations.reduce((total, c) => total + (c.prescriptions?.length || 0), 0)} médicaments
                 </div>
               </div>
             </div>
@@ -616,9 +569,9 @@ export function PrescriptionList() {
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
               >
                 <option value="all">Tous les médecins</option>
-                {MOCK_DOCTORS.map(doctor => (
+                {doctors.map(doctor => (
                   <option key={doctor.id} value={doctor.id}>
-                    {doctor.firstName} {doctor.lastName}
+                    {doctor.first_name} {doctor.last_name}
                   </option>
                 ))}
               </select>
@@ -627,9 +580,15 @@ export function PrescriptionList() {
         </div>
 
         <div className="divide-y divide-gray-200">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Chargement des ordonnances...</p>
+            </div>
+          ) : (
           {filteredConsultations.map((consultation) => {
-            const patient = getPatientInfo(consultation.patientId);
-            const doctor = getDoctorInfo(consultation.doctorId);
+            const patient = getPatientInfo(consultation.patient_id);
+            const doctor = getDoctorInfo(consultation.doctor_id);
 
             return (
               <div key={consultation.id} className="p-6 hover:bg-gray-50 transition-colors">
@@ -639,7 +598,7 @@ export function PrescriptionList() {
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-gray-400" />
                         <span className="font-medium text-gray-900">
-                          {patient?.firstName} {patient?.lastName}
+                          {patient?.first_name} {patient?.last_name}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -649,7 +608,7 @@ export function PrescriptionList() {
                         </span>
                       </div>
                       <div className="text-sm text-gray-600">
-                        <strong>Dr.</strong> {doctor?.lastName} - {doctor?.speciality}
+                        <strong>Dr.</strong> {doctor?.last_name} - {doctor?.speciality}
                       </div>
                     </div>
 
@@ -662,7 +621,7 @@ export function PrescriptionList() {
                       <div>
                         <span className="text-sm font-medium text-gray-700">Médicaments prescrits: </span>
                         <div className="mt-1 flex flex-wrap gap-2">
-                          {consultation.prescription.map((prescription, index) => (
+                          {consultation.prescriptions.map((prescription: any, index: number) => (
                             <span
                               key={index}
                               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
@@ -702,6 +661,7 @@ export function PrescriptionList() {
               </div>
             );
           })}
+          )}
         </div>
 
         {filteredConsultations.length === 0 && (

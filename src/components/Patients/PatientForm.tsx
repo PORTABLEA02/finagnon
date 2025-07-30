@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { X, Save } from 'lucide-react';
-import { Patient } from '../../types';
+import { Database } from '../../lib/database.types';
 import { useAuth } from '../../context/AuthContext';
+
+type Patient = Database['public']['Tables']['patients']['Row'];
 
 interface PatientFormProps {
   patient?: Patient;
@@ -12,15 +14,15 @@ interface PatientFormProps {
 export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    firstName: patient?.firstName || '',
-    lastName: patient?.lastName || '',
-    dateOfBirth: patient?.dateOfBirth || '',
+    first_name: patient?.first_name || '',
+    last_name: patient?.last_name || '',
+    date_of_birth: patient?.date_of_birth || '',
     gender: patient?.gender || 'M',
     phone: patient?.phone || '',
     email: patient?.email || '',
     address: patient?.address || '',
-    emergencyContact: patient?.emergencyContact || '',
-    bloodType: patient?.bloodType || '',
+    emergency_contact: patient?.emergency_contact || '',
+    blood_type: patient?.blood_type || '',
     allergies: patient?.allergies?.join(', ') || ''
   });
 
@@ -64,8 +66,8 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
               </label>
               <input
                 type="text"
-                name="firstName"
-                value={formData.firstName}
+                name="first_name"
+                value={formData.first_name}
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -78,8 +80,8 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
               </label>
               <input
                 type="text"
-                name="lastName"
-                value={formData.lastName}
+                name="last_name"
+                value={formData.last_name}
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -92,8 +94,8 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
               </label>
               <input
                 type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
+              name="date_of_birth"
+              value={formData.date_of_birth}
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -152,8 +154,8 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
                   </label>
                   <input
                     type="tel"
-                    name="emergencyContact"
-                    value={formData.emergencyContact}
+                    name="emergency_contact"
+                    value={formData.emergency_contact}
                     onChange={handleChange}
                     required
                     placeholder="+237 690 000 000"
@@ -166,8 +168,8 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
                     Groupe Sanguin
                   </label>
                   <select
-                    name="bloodType"
-                    value={formData.bloodType}
+                    name="blood_type"
+                    value={formData.blood_type}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >

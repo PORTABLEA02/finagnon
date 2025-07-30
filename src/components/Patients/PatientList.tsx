@@ -1,59 +1,46 @@
 import React, { useState } from 'react';
 import { Search, Plus, Eye, Edit, Phone, Mail } from 'lucide-react';
-import { Patient } from '../../types';
+import { Database } from '../../lib/database.types';
 import { useAuth } from '../../context/AuthContext';
+import { PatientService } from '../../services/patients';
 import { PatientDetail } from './PatientDetail';
 import { PatientForm } from './PatientForm';
 
-// Mock data
-const MOCK_PATIENTS: Patient[] = [
-  {
-    id: '1',
-    firstName: 'Jean',
-    lastName: 'Nguema',
-    dateOfBirth: '1985-03-15',
-    gender: 'M',
-    phone: '+237 690 123 456',
-    email: 'jean.nguema@email.com',
-    address: 'Yaoundé, Quartier Bastos',
-    emergencyContact: '+237 690 654 321',
-    bloodType: 'A+',
-    allergies: ['Pénicilline'],
-    medicalHistory: [],
-    createdAt: '2024-01-15T00:00:00Z'
-  },
-  {
-    id: '2',
-    firstName: 'Marie',
-    lastName: 'Atangana',
-    dateOfBirth: '1992-07-22',
-    gender: 'F',
-    phone: '+237 690 987 654',
-    email: 'marie.atangana@email.com',
-    address: 'Douala, Akwa',
-    emergencyContact: '+237 690 111 222',
-    bloodType: 'O-',
-    allergies: [],
-    medicalHistory: [],
-    createdAt: '2024-01-10T00:00:00Z'
-  }
-];
+type Patient = Database['public']['Tables']['patients']['Row'];
 
 interface PatientListProps {
-  onSelectPatient: (patient: Patient) => void;
+  onSelectPatient: (patient: Patient | null) => void;
   onAddPatient: () => void;
 }
 
 export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [patients] = useState<Patient[]>(MOCK_PATIENTS);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [showPatientForm, setShowPatientForm] = useState(false);
   const { user } = useAuth();
 
+  // Charger les patients au montage du composant
+  React.useEffect(() => {
+    loadPatients();
+  }, []);
+
+  const loadPatients = async () => {
+    try {
+      setLoading(true);
+      const data = await PatientService.getAll();
+      setPatients(data);
+    } catch (error) {
+      console.error('Error loading patients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredPatients = patients.filter(patient =>
-    `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    `${patient.first_name} ${patient.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.phone.includes(searchTerm)
   );
 
@@ -98,11 +85,35 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
   };
 
   const handleSavePatient = (patientData: Partial<Patient>) => {
-    console.log('Saving patient:', patientData);
-    // TODO: Implement save logic
-    setShowPatientForm(false);
-    setEditingPatient(null);
+    const savePatient = async () => {
+      try {
+        if (editingPatient) {
+          await PatientService.update(editingPatient.id, patientData);
+        } else {
+          await PatientService.create(patientData as any);
+        }
+        await loadPatients();
+        setShowPatientForm(false);
+        setEditingPatient(null);
+      } catch (error) {
+        console.error('Error saving patient:', error);
+        alert('Erreur lors de la sauvegarde du patient');
+      }
+    };
+    savePatient();
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-500 mt-2">Chargement des patients...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -165,7 +176,7 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {patient.firstName} {patient.lastName}
+                        {patient.first_name} {patient.last_name}
                       </div>
                       <div className="text-sm text-gray-500">
                         {patient.gender === 'M' ? 'Masculin' : 'Féminin'}
@@ -188,11 +199,11 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {calculateAge(patient.dateOfBirth)} ans
+                  {calculateAge(patient.date_of_birth)} ans
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    {patient.bloodType || 'Non défini'}
+                    {patient.blood_type || 'Non défini'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

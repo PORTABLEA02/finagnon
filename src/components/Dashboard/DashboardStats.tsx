@@ -1,5 +1,9 @@
 import React from 'react';
 import { Users, Calendar, DollarSign, AlertTriangle } from 'lucide-react';
+import { AppointmentService } from '../../services/appointments';
+import { PatientService } from '../../services/patients';
+import { InvoiceService } from '../../services/invoices';
+import { MedicineService } from '../../services/medicines';
 
 interface StatCardProps {
   title: string;
@@ -32,41 +36,97 @@ function StatCard({ title, value, change, changeType, icon: Icon, color }: StatC
 }
 
 export function DashboardStats() {
-  const stats = [
+  const [stats, setStats] = React.useState([
     {
       title: 'Patients Total',
-      value: '1,247',
-      change: '+12% ce mois',
+      value: '0',
+      change: 'Chargement...',
       changeType: 'increase' as const,
       icon: Users,
       color: 'bg-blue-500'
     },
     {
       title: 'RDV Aujourd\'hui',
-      value: '23',
-      change: '5 en attente',
+      value: '0',
+      change: 'Chargement...',
       changeType: 'increase' as const,
       icon: Calendar,
       color: 'bg-green-500'
     },
     {
       title: 'Revenus Mensuel',
-      value: '847,500 FCFA',
-      change: '+8% vs mois dernier',
+      value: '0 FCFA',
+      change: 'Chargement...',
       changeType: 'increase' as const,
       icon: DollarSign,
       color: 'bg-purple-500'
     },
     {
       title: 'Stock Critique',
-      value: '7',
-      change: 'Réappro. urgente',
+      value: '0',
+      change: 'Chargement...',
       changeType: 'decrease' as const,
       icon: AlertTriangle,
       color: 'bg-red-500'
     }
-  ];
+  ]);
 
+  React.useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const [
+        appointmentStats,
+        billingStats,
+        inventoryStats,
+        patientsData
+      ] = await Promise.all([
+        AppointmentService.getStats(),
+        InvoiceService.getBillingStats(),
+        MedicineService.getInventoryStats(),
+        PatientService.getAll()
+      ]);
+
+      setStats([
+        {
+          title: 'Patients Total',
+          value: patientsData.length.toString(),
+          change: '+12% ce mois',
+          changeType: 'increase' as const,
+          icon: Users,
+          color: 'bg-blue-500'
+        },
+        {
+          title: 'RDV Aujourd\'hui',
+          value: appointmentStats.today.total.toString(),
+          change: `${appointmentStats.today.pending} en attente`,
+          changeType: 'increase' as const,
+          icon: Calendar,
+          color: 'bg-green-500'
+        },
+        {
+          title: 'Revenus Mensuel',
+          value: `${Math.round(billingStats.monthlyRevenue / 1000).toLocaleString()}K FCFA`,
+          change: '+8% vs mois dernier',
+          changeType: 'increase' as const,
+          icon: DollarSign,
+          color: 'bg-purple-500'
+        },
+        {
+          title: 'Stock Critique',
+          value: inventoryStats.lowStockItems.toString(),
+          change: 'Réappro. urgente',
+          changeType: 'decrease' as const,
+          icon: AlertTriangle,
+          color: 'bg-red-500'
+        }
+      ]);
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error);
+    }
+  };
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {stats.map((stat, index) => (

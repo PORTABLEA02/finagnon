@@ -1,81 +1,11 @@
 import React, { useState } from 'react';
 import { Search, Plus, Eye, Edit, CreditCard, Printer, Filter, DollarSign, Calendar, User, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import { Invoice, Patient } from '../../types';
+import { Database } from '../../lib/database.types';
+import { InvoiceService } from '../../services/invoices';
+import { PatientService } from '../../services/patients';
 
-// Mock data
-const MOCK_INVOICES: Invoice[] = [
-  {
-    id: 'INV-2024-001',
-    patientId: '1',
-    appointmentId: '1',
-    date: '2024-01-20',
-    items: [
-      {
-        description: 'Consultation cardiologique',
-        quantity: 1,
-        unitPrice: 25000,
-        total: 25000
-      },
-      {
-        description: 'ECG',
-        quantity: 1,
-        unitPrice: 15000,
-        total: 15000
-      }
-    ],
-    subtotal: 40000,
-    tax: 0,
-    total: 40000,
-    status: 'paid',
-    paymentMethod: 'card',
-    paidAt: '2024-01-20T14:30:00Z'
-  },
-  {
-    id: 'INV-2024-002',
-    patientId: '2',
-    date: '2024-01-19',
-    items: [
-      {
-        description: 'Consultation générale',
-        quantity: 1,
-        unitPrice: 15000,
-        total: 15000
-      },
-      {
-        description: 'Analyses sanguines',
-        quantity: 1,
-        unitPrice: 20000,
-        total: 20000
-      }
-    ],
-    subtotal: 35000,
-    tax: 0,
-    total: 35000,
-    status: 'pending'
-  },
-  {
-    id: 'INV-2024-003',
-    patientId: '1',
-    date: '2024-01-15',
-    items: [
-      {
-        description: 'Consultation de suivi',
-        quantity: 1,
-        unitPrice: 20000,
-        total: 20000
-      }
-    ],
-    subtotal: 20000,
-    tax: 0,
-    total: 20000,
-    status: 'overdue'
-  }
-];
-
-const MOCK_PATIENTS = [
-  { id: '1', firstName: 'Jean', lastName: 'Nguema', phone: '+237 690 123 456' },
-  { id: '2', firstName: 'Marie', lastName: 'Atangana', phone: '+237 690 987 654' }
-];
+type Invoice = Database['public']['Tables']['invoices']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
 
 interface InvoiceListProps {
   onSelectInvoice: (invoice: Invoice) => void;
@@ -88,11 +18,34 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('all');
-  const [invoices] = useState<Invoice[]>(MOCK_INVOICES);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Charger les données au montage du composant
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [invoicesData, patientsData] = await Promise.all([
+        InvoiceService.getAll(),
+        PatientService.getAll()
+      ]);
+      setInvoices(invoicesData);
+      setPatients(patientsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredInvoices = invoices.filter(invoice => {
-    const patient = MOCK_PATIENTS.find(p => p.id === invoice.patientId);
-    const patientName = patient ? `${patient.firstName} ${patient.lastName}` : '';
+    const patient = patients.find(p => p.id === invoice.patient_id);
+    const patientName = patient ? `${patient.first_name} ${patient.last_name}` : '';
     
     const matchesSearch = invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          patientName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -122,7 +75,7 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
   });
 
   const getPatientInfo = (patientId: string) => {
-    return MOCK_PATIENTS.find(p => p.id === patientId);
+    return patients.find(p => p.id === patientId);
   };
 
   const getStatusLabel = (status: string) => {
@@ -189,6 +142,13 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {loading ? (
+            <div className="col-span-4 text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Chargement des statistiques...</p>
+            </div>
+          ) : (
+            <>
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -228,6 +188,8 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
               <AlertCircle className="h-8 w-8 text-red-500" />
             </div>
           </div>
+            </>
+          )}
         </div>
 
         {/* Filters */}
@@ -274,6 +236,12 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
 
       {/* Invoice Table */}
       <div className="overflow-x-auto">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement des factures...</p>
+          </div>
+        ) : (
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -299,7 +267,7 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredInvoices.map((invoice) => {
-              const patient = getPatientInfo(invoice.patientId);
+              const patient = getPatientInfo(invoice.patient_id);
               
               return (
                 <tr key={invoice.id} className="hover:bg-gray-50">
@@ -308,9 +276,9 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
                       <div className="text-sm font-medium text-gray-900">
                         {invoice.id}
                       </div>
-                      {invoice.appointmentId && (
+                      {invoice.appointment_id && (
                         <div className="text-sm text-gray-500">
-                          RDV: {invoice.appointmentId}
+                          RDV: {invoice.appointment_id}
                         </div>
                       )}
                     </div>
@@ -324,7 +292,7 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {patient?.firstName} {patient?.lastName}
+                          {patient?.first_name} {patient?.last_name}
                         </div>
                         <div className="text-sm text-gray-500">
                           {patient?.phone}
@@ -344,9 +312,9 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
                     <div className="text-sm font-medium text-gray-900">
                       {invoice.total.toLocaleString()} FCFA
                     </div>
-                    {invoice.paymentMethod && (
+                    {invoice.payment_method && (
                       <div className="text-sm text-gray-500">
-                        {getPaymentMethodLabel(invoice.paymentMethod)}
+                        {getPaymentMethodLabel(invoice.payment_method)}
                       </div>
                     )}
                   </td>
@@ -394,6 +362,7 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
             })}
           </tbody>
         </table>
+        )}
       </div>
 
       {filteredInvoices.length === 0 && (

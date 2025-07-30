@@ -1,47 +1,12 @@
 import React, { useState } from 'react';
 import { X, Save, Calendar, Clock, User, FileText } from 'lucide-react';
-import { Appointment, Patient } from '../../types';
+import { Database } from '../../lib/database.types';
+import { PatientService } from '../../services/patients';
+import { ProfileService } from '../../services/profiles';
 
-// Mock patients data
-const MOCK_PATIENTS: Patient[] = [
-  {
-    id: '1',
-    firstName: 'Jean',
-    lastName: 'Nguema',
-    dateOfBirth: '1985-03-15',
-    gender: 'M',
-    phone: '+237 690 123 456',
-    email: 'jean.nguema@email.com',
-    address: 'Yaoundé, Quartier Bastos',
-    emergencyContact: '+237 690 654 321',
-    bloodType: 'A+',
-    allergies: ['Pénicilline'],
-    medicalHistory: [],
-    createdAt: '2024-01-15T00:00:00Z'
-  },
-  {
-    id: '2',
-    firstName: 'Marie',
-    lastName: 'Atangana',
-    dateOfBirth: '1992-07-22',
-    gender: 'F',
-    phone: '+237 690 987 654',
-    email: 'marie.atangana@email.com',
-    address: 'Douala, Akwa',
-    emergencyContact: '+237 690 111 222',
-    bloodType: 'O-',
-    allergies: [],
-    medicalHistory: [],
-    createdAt: '2024-01-10T00:00:00Z'
-  }
-];
-
-// Mock doctors data
-const MOCK_DOCTORS = [
-  { id: '2', firstName: 'Dr. Paul', lastName: 'Martin', speciality: 'Cardiologie' },
-  { id: '3', firstName: 'Dr. Sophie', lastName: 'Dubois', speciality: 'Pédiatrie' },
-  { id: '4', firstName: 'Dr. Jean', lastName: 'Kouam', speciality: 'Médecine générale' }
-];
+type Appointment = Database['public']['Tables']['appointments']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 // Time slots for appointments
 const TIME_SLOTS = [
@@ -58,8 +23,8 @@ interface AppointmentFormProps {
 
 export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFormProps) {
   const [formData, setFormData] = useState({
-    patientId: appointment?.patientId || '',
-    doctorId: appointment?.doctorId || '',
+    patient_id: appointment?.patient_id || '',
+    doctor_id: appointment?.doctor_id || '',
     date: appointment?.date || new Date().toISOString().split('T')[0],
     time: appointment?.time || '',
     duration: appointment?.duration || 30,
@@ -68,13 +33,38 @@ export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFor
     notes: appointment?.notes || ''
   });
 
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [doctors, setDoctors] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
   const [newPatient, setNewPatient] = useState({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     phone: '',
     email: ''
   });
+
+  // Charger les données au montage du composant
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [patientsData, doctorsData] = await Promise.all([
+        PatientService.getAll(),
+        ProfileService.getDoctors()
+      ]);
+      setPatients(patientsData);
+      setDoctors(doctorsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,27 +80,40 @@ export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFor
   };
 
   const addNewPatient = () => {
-    if (newPatient.firstName && newPatient.lastName && newPatient.phone) {
+    if (newPatient.first_name && newPatient.last_name && newPatient.phone) {
       // In a real app, this would make an API call to create the patient
       console.log('Creating new patient:', newPatient);
       setShowNewPatientForm(false);
-      setNewPatient({ firstName: '', lastName: '', phone: '', email: '' });
+      setNewPatient({ first_name: '', last_name: '', phone: '', email: '' });
     }
   };
 
   const getPatientInfo = (patientId: string) => {
-    return MOCK_PATIENTS.find(p => p.id === patientId);
+    return patients.find(p => p.id === patientId);
   };
 
   const getDoctorInfo = (doctorId: string) => {
-    return MOCK_DOCTORS.find(d => d.id === doctorId);
+    return doctors.find(d => d.id === doctorId);
   };
 
-  const selectedPatient = getPatientInfo(formData.patientId);
-  const selectedDoctor = getDoctorInfo(formData.doctorId);
+  const selectedPatient = getPatientInfo(formData.patient_id);
+  const selectedDoctor = getDoctorInfo(formData.doctor_id);
 
   // Get minimum date (today)
   const today = new Date().toISOString().split('T')[0];
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -150,18 +153,18 @@ export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFor
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input
                     type="text"
-                    name="firstName"
+                    name="first_name"
                     placeholder="Prénom *"
-                    value={newPatient.firstName}
+                    value={newPatient.first_name}
                     onChange={handleNewPatientChange}
                     required
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <input
                     type="text"
-                    name="lastName"
+                    name="last_name"
                     placeholder="Nom *"
-                    value={newPatient.lastName}
+                    value={newPatient.last_name}
                     onChange={handleNewPatientChange}
                     required
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -195,16 +198,16 @@ export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFor
             ) : (
               <div>
                 <select
-                  name="patientId"
-                  value={formData.patientId}
+                  name="patient_id"
+                  value={formData.patient_id}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Sélectionner un patient</option>
-                  {MOCK_PATIENTS.map(patient => (
+                  {patients.map(patient => (
                     <option key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName} - {patient.phone}
+                      {patient.first_name} {patient.last_name} - {patient.phone}
                     </option>
                   ))}
                 </select>
@@ -215,7 +218,7 @@ export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFor
                       <div>
                         <span className="font-medium text-gray-700">Âge: </span>
                         <span className="text-gray-900">
-                          {new Date().getFullYear() - new Date(selectedPatient.dateOfBirth).getFullYear()} ans
+                          {new Date().getFullYear() - new Date(selectedPatient.date_of_birth).getFullYear()} ans
                         </span>
                       </div>
                       <div>
@@ -228,7 +231,7 @@ export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFor
                       </div>
                       <div>
                         <span className="font-medium text-gray-700">Groupe sanguin: </span>
-                        <span className="text-gray-900">{selectedPatient.bloodType || 'Non défini'}</span>
+                        <span className="text-gray-900">{selectedPatient.blood_type || 'Non défini'}</span>
                       </div>
                     </div>
                     {selectedPatient.allergies.length > 0 && (
@@ -249,16 +252,16 @@ export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFor
               Médecin *
             </label>
             <select
-              name="doctorId"
-              value={formData.doctorId}
+              name="doctor_id"
+              value={formData.doctor_id}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Sélectionner un médecin</option>
-              {MOCK_DOCTORS.map(doctor => (
+              {doctors.map(doctor => (
                 <option key={doctor.id} value={doctor.id}>
-                  {doctor.firstName} {doctor.lastName} - {doctor.speciality}
+                  {doctor.first_name} {doctor.last_name} - {doctor.speciality || 'Médecin'}
                 </option>
               ))}
             </select>
@@ -378,12 +381,12 @@ export function AppointmentForm({ appointment, onClose, onSave }: AppointmentFor
           </div>
 
           {/* Summary */}
-          {formData.patientId && formData.doctorId && formData.date && formData.time && (
+          {formData.patient_id && formData.doctor_id && formData.date && formData.time && (
             <div className="bg-green-50 rounded-lg p-4">
               <h3 className="font-medium text-green-800 mb-2">Résumé du rendez-vous</h3>
               <div className="text-sm text-green-700 space-y-1">
-                <p><strong>Patient:</strong> {selectedPatient?.firstName} {selectedPatient?.lastName}</p>
-                <p><strong>Médecin:</strong> {selectedDoctor?.firstName} {selectedDoctor?.lastName}</p>
+                <p><strong>Patient:</strong> {selectedPatient?.first_name} {selectedPatient?.last_name}</p>
+                <p><strong>Médecin:</strong> {selectedDoctor?.first_name} {selectedDoctor?.last_name}</p>
                 <p><strong>Date:</strong> {new Date(formData.date).toLocaleDateString('fr-FR')}</p>
                 <p><strong>Heure:</strong> {formData.time} ({formData.duration} min)</p>
                 <p><strong>Motif:</strong> {formData.reason}</p>
