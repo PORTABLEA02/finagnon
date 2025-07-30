@@ -2,18 +2,10 @@ import React, { useState } from 'react';
 import { Settings, User, Shield, Database, Bell, Palette, Globe, Save, AlertCircle } from 'lucide-react';
 import { GeneralSettings } from './GeneralSettings';
 import { UserManagement } from './UserManagement';
-import { SecuritySettings } from './SecuritySettings';
-import { SystemSettings } from './SystemSettings';
-import { NotificationSettings } from './NotificationSettings';
-import { AppearanceSettings } from './AppearanceSettings';
 
 const SETTINGS_TABS = [
   { id: 'general', label: 'Général', icon: Settings },
   { id: 'users', label: 'Utilisateurs', icon: User },
-  { id: 'security', label: 'Sécurité', icon: Shield },
-  { id: 'system', label: 'Système', icon: Database },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'appearance', label: 'Apparence', icon: Palette }
 ];
 
 export function SettingsManager() {
@@ -26,14 +18,6 @@ export function SettingsManager() {
         return <GeneralSettings onSettingsChange={() => setHasUnsavedChanges(true)} />;
       case 'users':
         return <UserManagement />;
-      case 'security':
-        return <SecuritySettings onSettingsChange={() => setHasUnsavedChanges(true)} />;
-      case 'system':
-        return <SystemSettings onSettingsChange={() => setHasUnsavedChanges(true)} />;
-      case 'notifications':
-        return <NotificationSettings onSettingsChange={() => setHasUnsavedChanges(true)} />;
-      case 'appearance':
-        return <AppearanceSettings onSettingsChange={() => setHasUnsavedChanges(true)} />;
       default:
         return <GeneralSettings onSettingsChange={() => setHasUnsavedChanges(true)} />;
     }
