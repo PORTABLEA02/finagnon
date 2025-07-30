@@ -86,7 +86,7 @@ export interface InvoiceItem {
 export interface Medicine {
   id: string;
   name: string;
-  category: string;
+  category: 'medication' | 'medical-supply' | 'equipment' | 'consumable' | 'diagnostic';
   manufacturer: string;
   batchNumber: string;
   expiryDate: string;
@@ -94,6 +94,8 @@ export interface Medicine {
   minStock: number;
   unitPrice: number;
   location: string;
+  unit: string; // unité de mesure (boîte, pièce, ml, etc.)
+  description?: string;
 }
 
 export interface StockMovement {
@@ -104,4 +106,5 @@ export interface StockMovement {
   reason: string;
   date: string;
   userId: string;
+  reference?: string; // référence de la facture ou du bon de commande
 }
