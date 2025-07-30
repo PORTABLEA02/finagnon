@@ -24,9 +24,12 @@ export function GeneralSettings({ onSettingsChange }: GeneralSettingsProps) {
     workingDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   });
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
   const handleChange = (field: string, value: any) => {
     setSettings(prev => ({ ...prev, [field]: value }));
     onSettingsChange();
+    setSaveMessage(''); // Clear save message when user makes changes
   };
 
   const handleWorkingHoursChange = (field: string, value: string) => {
@@ -35,6 +38,7 @@ export function GeneralSettings({ onSettingsChange }: GeneralSettingsProps) {
       workingHours: { ...prev.workingHours, [field]: value }
     }));
     onSettingsChange();
+    setSaveMessage('');
   };
 
   const handleWorkingDaysChange = (day: string, checked: boolean) => {
@@ -45,8 +49,30 @@ export function GeneralSettings({ onSettingsChange }: GeneralSettingsProps) {
         : prev.workingDays.filter(d => d !== day)
     }));
     onSettingsChange();
+    setSaveMessage('');
   };
 
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    setSaveMessage('');
+    
+    try {
+      // Simulate API call to save settings
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Here you would normally make an API call to save the settings
+      console.log('Saving clinic settings:', settings);
+      
+      setSaveMessage('Paramètres sauvegardés avec succès !');
+      
+      // Clear the message after 3 seconds
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) {
+      setSaveMessage('Erreur lors de la sauvegarde. Veuillez réessayer.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const dayLabels = {
     monday: 'Lundi',
     tuesday: 'Mardi',
@@ -129,6 +155,26 @@ export function GeneralSettings({ onSettingsChange }: GeneralSettingsProps) {
           />
         </div>
       </div>
+        {/* Bouton Enregistrer pour les informations de la clinique */}
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex-1">
+            {saveMessage && (
+              <div className={`text-sm font-medium ${
+                saveMessage.includes('succès') ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {saveMessage}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={handleSaveSettings}
+            disabled={isSaving}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Save className="h-4 w-4" />
+            <span>{isSaving ? 'Enregistrement...' : 'Enregistrer les informations'}</span>
+          </button>
+        </div>
 
       <div>
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Configuration Régionale</h3>
