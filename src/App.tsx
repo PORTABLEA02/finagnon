@@ -10,6 +10,7 @@ import { AppointmentCalendar } from './components/Appointments/AppointmentCalend
 import { InventoryManager } from './components/Inventory/InventoryManager';
 import { ConsultationsManager } from './components/Consultations';
 import { PrescriptionList } from './components/Prescriptions';
+import { StaffManager } from './components/Staff';
 import { SettingsManager } from './components/Settings';
 import { Patient } from './types';
 
@@ -98,12 +99,7 @@ function Dashboard() {
         );
 
       case 'staff':
-        return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Gestion du Personnel</h2>
-            <p className="text-gray-600">Module de gestion du personnel en cours de développement...</p>
-          </div>
-        );
+        return <StaffManager />;
 
       case 'inventory':
         return <InventoryManager />;
