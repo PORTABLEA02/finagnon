@@ -212,5 +212,3 @@ export function ConsultationList({ onSelectConsultation, onNewConsultation }: Co
     </div>
   );
 }
-
-export { ConsultationList }
