@@ -12,6 +12,7 @@ import { ConsultationsManager } from './components/Consultations';
 import { PrescriptionList } from './components/Prescriptions';
 import { StaffManager } from './components/Staff';
 import { SettingsManager } from './components/Settings';
+import { BillingManager } from './components/Billing';
 import { Patient } from './types';
 
 function Dashboard() {
@@ -92,10 +93,7 @@ function Dashboard() {
 
       case 'billing':
         return (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Facturation et Paiements</h2>
-            <p className="text-gray-600">Module de facturation en cours de développement...</p>
-          </div>
+          <BillingManager />
         );
 
       case 'staff':
