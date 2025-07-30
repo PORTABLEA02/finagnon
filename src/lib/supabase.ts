@@ -34,6 +34,7 @@ export async function getUserProfile(userId: string): Promise<AuthUser | null> {
     .from('profiles')
     .select('*')
     .eq('id', userId)
+    .eq('is_active', true)
     .single();
 
   if (error || !data) {
@@ -51,39 +52,6 @@ export async function getUserProfile(userId: string): Promise<AuthUser | null> {
     phone: data.phone,
     isActive: data.is_active
   };
-}
-
-// Fonction pour créer un profil utilisateur après inscription
-export async function createUserProfile(
-  userId: string,
-  email: string,
-  firstName: string,
-  lastName: string,
-  role: 'admin' | 'doctor' | 'secretary',
-  phone: string,
-  speciality?: string
-) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .insert({
-      id: userId,
-      email,
-      first_name: firstName,
-      last_name: lastName,
-      role,
-      phone,
-      speciality,
-      is_active: true
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating user profile:', error);
-    throw error;
-  }
-
-  return data;
 }
 
 // Fonction pour vérifier les permissions
@@ -111,4 +79,39 @@ export async function getUsersByRole(role?: 'admin' | 'doctor' | 'secretary') {
   }
 
   return data;
+}
+
+// Fonction pour vérifier si un email existe déjà
+export async function checkEmailExists(email: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', email.trim().toLowerCase())
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+    console.error('Error checking email:', error);
+    return false;
+  }
+
+  return !!data;
+}
+
+// Fonction pour réinitialiser le mot de passe
+export async function resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+
+    if (error) {
+      console.error('Password reset error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Password reset exception:', error);
+    return { success: false, error: 'Erreur lors de la réinitialisation' };
+  }
 }
