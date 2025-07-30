@@ -52,7 +52,6 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         { id: 'patients', label: 'Patients', icon: Users },
         { id: 'appointments', label: 'Rendez-vous', icon: Calendar },
         { id: 'billing', label: 'Facturation', icon: DollarSign },
-        { id: 'inventory', label: 'Stock', icon: Package },
       ];
     }
   };

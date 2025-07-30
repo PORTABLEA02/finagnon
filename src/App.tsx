@@ -75,15 +75,6 @@ function Dashboard() {
               onSelectPatient={setSelectedPatient}
               onAddPatient={() => setShowPatientForm(true)}
             />
-            {showPatientForm && (
-              <PatientForm
-                onClose={() => setShowPatientForm(false)}
-                onSave={(patient) => {
-                  console.log('Saving patient:', patient);
-                  setShowPatientForm(false);
-                }}
-              />
-            )}
           </div>
         );
 

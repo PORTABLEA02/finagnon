@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Search, Plus, Eye, Edit, Phone, Mail } from 'lucide-react';
 import { Patient } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { PatientDetail } from './PatientDetail';
+import { PatientForm } from './PatientForm';
 
 // Mock data
 const MOCK_PATIENTS: Patient[] = [
@@ -44,6 +47,10 @@ interface PatientListProps {
 export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [patients] = useState<Patient[]>(MOCK_PATIENTS);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [showPatientForm, setShowPatientForm] = useState(false);
+  const { user } = useAuth();
 
   const filteredPatients = patients.filter(patient =>
     `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,8 +68,44 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
     return age;
   };
 
+  const handleViewPatient = (patient: Patient) => {
+    // Seuls les médecins et administrateurs peuvent voir le dossier complet
+    if (user?.role === 'doctor' || user?.role === 'admin') {
+      setSelectedPatient(patient);
+    }
+  };
+
+  const handleEditPatient = (patient: Patient) => {
+    setEditingPatient(patient);
+    setShowPatientForm(true);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedPatient(null);
+  };
+
+  const handleEditFromDetail = () => {
+    if (selectedPatient) {
+      setEditingPatient(selectedPatient);
+      setSelectedPatient(null);
+      setShowPatientForm(true);
+    }
+  };
+
+  const handleCloseForm = () => {
+    setShowPatientForm(false);
+    setEditingPatient(null);
+  };
+
+  const handleSavePatient = (patientData: Partial<Patient>) => {
+    console.log('Saving patient:', patientData);
+    // TODO: Implement save logic
+    setShowPatientForm(false);
+    setEditingPatient(null);
+  };
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+    <>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Gestion des Patients</h2>
@@ -154,16 +197,19 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
+                    {(user?.role === 'doctor' || user?.role === 'admin') && (
+                      <button
+                        onClick={() => handleViewPatient(patient)}
+                        className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
+                        title="Voir le dossier médical"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
-                      onClick={() => onSelectPatient(patient)}
-                      className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
-                      title="Voir le dossier"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button
+                      onClick={() => handleEditPatient(patient)}
                       className="text-gray-600 hover:text-gray-800 p-1 rounded transition-colors"
-                      title="Modifier"
+                      title={user?.role === 'secretary' ? "Modifier les informations de contact" : "Modifier"}
                     >
                       <Edit className="h-4 w-4" />
                     </button>
@@ -181,5 +227,22 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
         </div>
       )}
     </div>
+
+      {selectedPatient && (user?.role === 'doctor' || user?.role === 'admin') && (
+        <PatientDetail
+          patient={selectedPatient}
+          onClose={handleCloseDetail}
+          onEdit={handleEditFromDetail}
+        />
+      )}
+
+      {showPatientForm && (
+        <PatientForm
+          patient={editingPatient || undefined}
+          onClose={handleCloseForm}
+          onSave={handleSavePatient}
+        />
+      )}
+    </>
   );
 }

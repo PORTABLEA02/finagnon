@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { Patient } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 
 interface PatientFormProps {
   patient?: Patient;
@@ -9,6 +10,7 @@ interface PatientFormProps {
 }
 
 export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     firstName: patient?.firstName || '',
     lastName: patient?.lastName || '',
@@ -34,12 +36,17 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Détermine si l'utilisateur peut modifier les informations médicales
+  const canEditMedicalInfo = user?.role === 'doctor' || user?.role === 'admin';
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">
-            {patient ? 'Modifier le Patient' : 'Nouveau Patient'}
+            {patient ? 
+              (user?.role === 'secretary' ? 'Modifier les informations de contact' : 'Modifier le Patient') 
+              : 'Nouveau Patient'}
           </h2>
           <button
             onClick={onClose}
@@ -137,42 +144,46 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Contact d'urgence *
-              </label>
-              <input
-                type="tel"
-                name="emergencyContact"
-                value={formData.emergencyContact}
-                onChange={handleChange}
-                required
-                placeholder="+237 690 000 000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+            {canEditMedicalInfo && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact d'urgence *
+                  </label>
+                  <input
+                    type="tel"
+                    name="emergencyContact"
+                    value={formData.emergencyContact}
+                    onChange={handleChange}
+                    required
+                    placeholder="+237 690 000 000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Groupe Sanguin
-              </label>
-              <select
-                name="bloodType"
-                value={formData.bloodType}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Sélectionner</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-              </select>
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Groupe Sanguin
+                  </label>
+                  <select
+                    name="bloodType"
+                    value={formData.bloodType}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+              </>
+            )}
           </div>
 
           <div>
@@ -189,19 +200,21 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Allergies (séparées par des virgules)
-            </label>
-            <input
-              type="text"
-              name="allergies"
-              value={formData.allergies}
-              onChange={handleChange}
-              placeholder="Pénicilline, Aspirine, Latex..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+          {canEditMedicalInfo && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Allergies (séparées par des virgules)
+              </label>
+              <input
+                type="text"
+                name="allergies"
+                value={formData.allergies}
+                onChange={handleChange}
+                placeholder="Pénicilline, Aspirine, Latex..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
             <button
