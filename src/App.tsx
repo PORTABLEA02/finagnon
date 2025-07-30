@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Heart } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginForm } from './components/Auth/LoginForm';
 import { Sidebar } from './components/Layout/Sidebar';
