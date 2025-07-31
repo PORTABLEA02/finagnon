@@ -3,6 +3,7 @@ import { X, Save, Calendar, Clock, User, FileText } from 'lucide-react';
 import { Database } from '../../lib/database.types';
 import { PatientService } from '../../services/patients';
 import { ProfileService } from '../../services/profiles';
+import { AppointmentService } from '../../services/appointments';
 
 type Appointment = Database['public']['Tables']['appointments']['Row'];
 type Patient = Database['public']['Tables']['patients']['Row'];

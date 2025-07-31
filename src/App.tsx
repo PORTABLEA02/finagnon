@@ -14,6 +14,7 @@ import { PrescriptionList } from './components/Prescriptions';
 import { StaffManager } from './components/Staff';
 import { SettingsManager } from './components/Settings';
 import { BillingManager } from './components/Billing';
+import { AppointmentService } from './services/appointments';
 import { Patient } from './types';
 
 function Dashboard() {
