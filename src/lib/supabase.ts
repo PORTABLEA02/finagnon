@@ -55,6 +55,7 @@ export type AuthUser = {
 // Fonction pour obtenir le profil utilisateur complet
 export async function getUserProfile(userId: string): Promise<AuthUser | null> {
   try {
+    console.log('🔍 getUserProfile() - Récupération du profil utilisateur pour:', userId);
     console.log('Fetching user profile for:', userId);
     
   const { data, error } = await supabase
@@ -65,10 +66,12 @@ export async function getUserProfile(userId: string): Promise<AuthUser | null> {
     .single();
 
   if (error || !data) {
+    console.error('❌ getUserProfile() - Erreur lors de la récupération du profil utilisateur:', error);
     console.error('Error fetching user profile:', error);
     return null;
   }
 
+    console.log('✅ getUserProfile() - Profil utilisateur récupéré avec succès:', data.email, data.role);
     console.log('User profile fetched successfully:', data.email);
     
   return {
@@ -82,6 +85,7 @@ export async function getUserProfile(userId: string): Promise<AuthUser | null> {
     isActive: data.is_active
   };
   } catch (error) {
+    console.error('❌ getUserProfile() - Exception lors de la récupération du profil utilisateur:', error);
     console.error('Exception in getUserProfile:', error);
     return null;
   }
@@ -94,6 +98,7 @@ export function hasPermission(userRole: string, requiredRoles: string[]): boolea
 
 // Fonction pour obtenir les utilisateurs par rôle
 export async function getUsersByRole(role?: 'admin' | 'doctor' | 'secretary') {
+  console.log('🔍 getUsersByRole() - Récupération des utilisateurs', role ? `pour le rôle: ${role}` : 'tous rôles');
   let query = supabase
     .from('profiles')
     .select('*')
@@ -107,15 +112,18 @@ export async function getUsersByRole(role?: 'admin' | 'doctor' | 'secretary') {
   const { data, error } = await query;
 
   if (error) {
+    console.error('❌ getUsersByRole() - Erreur lors de la récupération des utilisateurs par rôle:', error);
     console.error('Error fetching users by role:', error);
     throw error;
   }
 
+  console.log('✅ getUsersByRole() - Utilisateurs récupérés:', data?.length || 0, 'utilisateurs');
   return data;
 }
 
 // Fonction pour vérifier si un email existe déjà
 export async function checkEmailExists(email: string): Promise<boolean> {
+  console.log('🔍 checkEmailExists() - Vérification de l\'existence de l\'email:', email);
   const { data, error } = await supabase
     .from('profiles')
     .select('id')
@@ -123,27 +131,34 @@ export async function checkEmailExists(email: string): Promise<boolean> {
     .single();
 
   if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+    console.error('❌ checkEmailExists() - Erreur lors de la vérification de l\'email:', error);
     console.error('Error checking email:', error);
     return false;
   }
 
-  return !!data;
+  const exists = !!data;
+  console.log('✅ checkEmailExists() - Vérification terminée, email existe:', exists);
+  return exists;
 }
 
 // Fonction pour réinitialiser le mot de passe
 export async function resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
+  console.log('🔍 resetPassword() - Demande de réinitialisation de mot de passe pour:', email);
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`
     });
 
     if (error) {
+      console.error('❌ resetPassword() - Erreur lors de la réinitialisation du mot de passe:', error);
       console.error('Password reset error:', error);
       return { success: false, error: error.message };
     }
 
+    console.log('✅ resetPassword() - Email de réinitialisation envoyé avec succès');
     return { success: true };
   } catch (error) {
+    console.error('❌ resetPassword() - Exception lors de la réinitialisation du mot de passe:', error);
     console.error('Password reset exception:', error);
     return { success: false, error: 'Erreur lors de la réinitialisation' };
   }

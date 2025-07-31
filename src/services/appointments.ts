@@ -8,6 +8,7 @@ type AppointmentUpdate = Database['public']['Tables']['appointments']['Update'];
 export class AppointmentService {
   // Récupérer tous les rendez-vous
   static async getAll(): Promise<Appointment[]> {
+    console.log('🔍 AppointmentService.getAll() - Début de la récupération des rendez-vous');
     const { data, error } = await supabase
       .from('appointments')
       .select(`
@@ -19,15 +20,18 @@ export class AppointmentService {
       .order('time', { ascending: true });
 
     if (error) {
+      console.error('❌ AppointmentService.getAll() - Erreur lors de la récupération des rendez-vous:', error);
       console.error('Error fetching appointments:', error);
       throw error;
     }
 
+    console.log('✅ AppointmentService.getAll() - Rendez-vous récupérés avec succès:', data?.length || 0, 'rendez-vous');
     return data || [];
   }
 
   // Récupérer les rendez-vous par date
   static async getByDate(date: string): Promise<Appointment[]> {
+    console.log('🔍 AppointmentService.getByDate() - Récupération des rendez-vous pour la date:', date);
     const { data, error } = await supabase
       .from('appointments')
       .select(`
@@ -39,15 +43,18 @@ export class AppointmentService {
       .order('time', { ascending: true });
 
     if (error) {
+      console.error('❌ AppointmentService.getByDate() - Erreur lors de la récupération des rendez-vous par date:', error);
       console.error('Error fetching appointments by date:', error);
       throw error;
     }
 
+    console.log('✅ AppointmentService.getByDate() - Rendez-vous récupérés pour', date, ':', data?.length || 0, 'rendez-vous');
     return data || [];
   }
 
   // Récupérer les rendez-vous d'un médecin
   static async getByDoctor(doctorId: string, date?: string): Promise<Appointment[]> {
+    console.log('🔍 AppointmentService.getByDoctor() - Récupération des rendez-vous du médecin:', doctorId, date ? `pour la date: ${date}` : '');
     let query = supabase
       .from('appointments')
       .select(`
@@ -65,15 +72,18 @@ export class AppointmentService {
       .order('time', { ascending: true });
 
     if (error) {
+      console.error('❌ AppointmentService.getByDoctor() - Erreur lors de la récupération des rendez-vous du médecin:', error);
       console.error('Error fetching doctor appointments:', error);
       throw error;
     }
 
+    console.log('✅ AppointmentService.getByDoctor() - Rendez-vous du médecin récupérés:', data?.length || 0, 'rendez-vous');
     return data || [];
   }
 
   // Récupérer les rendez-vous d'un patient
   static async getByPatient(patientId: string): Promise<Appointment[]> {
+    console.log('🔍 AppointmentService.getByPatient() - Récupération des rendez-vous du patient:', patientId);
     const { data, error } = await supabase
       .from('appointments')
       .select(`
@@ -84,16 +94,20 @@ export class AppointmentService {
       .order('date', { ascending: false });
 
     if (error) {
+      console.error('❌ AppointmentService.getByPatient() - Erreur lors de la récupération des rendez-vous du patient:', error);
       console.error('Error fetching patient appointments:', error);
       throw error;
     }
 
+    console.log('✅ AppointmentService.getByPatient() - Rendez-vous du patient récupérés:', data?.length || 0, 'rendez-vous');
     return data || [];
   }
 
   // Créer un nouveau rendez-vous
   static async create(appointment: AppointmentInsert): Promise<Appointment> {
+    console.log('🔍 AppointmentService.create() - Création d\'un nouveau rendez-vous:', appointment);
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('🔍 AppointmentService.create() - Utilisateur actuel:', user?.id);
     
     const { data, error } = await supabase
       .from('appointments')
@@ -105,15 +119,18 @@ export class AppointmentService {
       .single();
 
     if (error) {
+      console.error('❌ AppointmentService.create() - Erreur lors de la création du rendez-vous:', error);
       console.error('Error creating appointment:', error);
       throw error;
     }
 
+    console.log('✅ AppointmentService.create() - Rendez-vous créé avec succès:', data.id, 'pour le', data.date, 'à', data.time);
     return data;
   }
 
   // Mettre à jour un rendez-vous
   static async update(id: string, updates: AppointmentUpdate): Promise<Appointment> {
+    console.log('🔍 AppointmentService.update() - Mise à jour du rendez-vous ID:', id, 'avec les données:', updates);
     const { data, error } = await supabase
       .from('appointments')
       .update(updates)
@@ -122,24 +139,30 @@ export class AppointmentService {
       .single();
 
     if (error) {
+      console.error('❌ AppointmentService.update() - Erreur lors de la mise à jour du rendez-vous:', error);
       console.error('Error updating appointment:', error);
       throw error;
     }
 
+    console.log('✅ AppointmentService.update() - Rendez-vous mis à jour avec succès:', data.id);
     return data;
   }
 
   // Supprimer un rendez-vous
   static async delete(id: string): Promise<void> {
+    console.log('🔍 AppointmentService.delete() - Suppression du rendez-vous ID:', id);
     const { error } = await supabase
       .from('appointments')
       .delete()
       .eq('id', id);
 
     if (error) {
+      console.error('❌ AppointmentService.delete() - Erreur lors de la suppression du rendez-vous:', error);
       console.error('Error deleting appointment:', error);
       throw error;
     }
+    
+    console.log('✅ AppointmentService.delete() - Rendez-vous supprimé avec succès:', id);
   }
 
   // Vérifier la disponibilité d'un créneau
@@ -150,6 +173,7 @@ export class AppointmentService {
     duration: number,
     excludeAppointmentId?: string
   ): Promise<boolean> {
+    console.log('🔍 AppointmentService.checkAvailability() - Vérification de disponibilité:', { doctorId, date, time, duration, excludeAppointmentId });
     let query = supabase
       .from('appointments')
       .select('id, time, duration')
@@ -164,10 +188,12 @@ export class AppointmentService {
     const { data, error } = await query;
 
     if (error) {
+      console.error('❌ AppointmentService.checkAvailability() - Erreur lors de la vérification de disponibilité:', error);
       console.error('Error checking availability:', error);
       return false;
     }
 
+    console.log('🔍 AppointmentService.checkAvailability() - Rendez-vous existants trouvés:', data?.length || 0);
     // Vérifier les conflits d'horaires
     const requestedStart = new Date(`2000-01-01T${time}`);
     const requestedEnd = new Date(requestedStart.getTime() + duration * 60000);
@@ -178,15 +204,18 @@ export class AppointmentService {
 
       // Vérifier le chevauchement
       if (requestedStart < existingEnd && requestedEnd > existingStart) {
+        console.log('❌ AppointmentService.checkAvailability() - Conflit détecté avec le rendez-vous:', appointment.id);
         return false;
       }
     }
 
+    console.log('✅ AppointmentService.checkAvailability() - Créneau disponible');
     return true;
   }
 
   // Récupérer les statistiques des rendez-vous
   static async getStats() {
+    console.log('🔍 AppointmentService.getStats() - Récupération des statistiques des rendez-vous');
     const today = new Date().toISOString().split('T')[0];
     
     const { data: todayAppointments, error: todayError } = await supabase
@@ -199,10 +228,15 @@ export class AppointmentService {
       .select('id, status');
 
     if (todayError || totalError) {
+      console.error('❌ AppointmentService.getStats() - Erreur lors de la récupération des statistiques:', todayError || totalError);
       console.error('Error fetching appointment stats:', todayError || totalError);
       throw todayError || totalError;
     }
 
+    console.log('✅ AppointmentService.getStats() - Statistiques récupérées:', {
+      today: todayAppointments?.length || 0,
+      total: totalAppointments?.length || 0
+    });
     return {
       today: {
         total: todayAppointments?.length || 0,

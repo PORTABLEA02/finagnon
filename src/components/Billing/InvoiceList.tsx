@@ -29,14 +29,20 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
 
   const loadData = async () => {
     try {
+      console.log('🔍 InvoiceList.loadData() - Début du chargement des données de facturation');
       setLoading(true);
       const [invoicesData, patientsData] = await Promise.all([
         InvoiceService.getAll(),
         PatientService.getAll()
       ]);
+      console.log('✅ InvoiceList.loadData() - Données de facturation chargées:', {
+        invoices: invoicesData.length,
+        patients: patientsData.length
+      });
       setInvoices(invoicesData);
       setPatients(patientsData);
     } catch (error) {
+      console.error('❌ InvoiceList.loadData() - Erreur lors du chargement des données de facturation:', error);
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
@@ -81,9 +87,12 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
   const handleDeleteInvoice = async (invoiceId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette facture ?')) {
       try {
+        console.log('🔍 InvoiceList.handleDeleteInvoice() - Suppression de la facture:', invoiceId);
         await InvoiceService.delete(invoiceId);
+        console.log('✅ InvoiceList.handleDeleteInvoice() - Facture supprimée, rechargement des données');
         await loadData();
       } catch (error) {
+        console.error('❌ InvoiceList.handleDeleteInvoice() - Erreur lors de la suppression de la facture:', error);
         console.error('Error deleting invoice:', error);
         alert('Erreur lors de la suppression de la facture');
       }

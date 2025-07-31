@@ -41,14 +41,20 @@ export function AppointmentCalendar() {
 
   const loadData = async () => {
     try {
+      console.log('🔍 AppointmentCalendar.loadData() - Début du chargement des données pour la date:', selectedDate);
       setLoading(true);
       const [appointmentsData, patientsData] = await Promise.all([
         AppointmentService.getByDate(selectedDate),
         PatientService.getAll()
       ]);
+      console.log('✅ AppointmentCalendar.loadData() - Données chargées:', {
+        appointments: appointmentsData.length,
+        patients: patientsData.length
+      });
       setAppointments(appointmentsData);
       setPatients(patientsData);
     } catch (error) {
+      console.error('❌ AppointmentCalendar.loadData() - Erreur lors du chargement des données:', error);
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
@@ -80,15 +86,20 @@ export function AppointmentCalendar() {
   const handleSaveAppointment = (appointmentData: Partial<Appointment>) => {
     const saveAppointment = async () => {
       try {
+        console.log('🔍 AppointmentCalendar.handleSaveAppointment() - Sauvegarde du rendez-vous:', appointmentData);
         if (editingAppointment) {
+          console.log('🔍 AppointmentCalendar.handleSaveAppointment() - Mise à jour du rendez-vous existant:', editingAppointment.id);
           await AppointmentService.update(editingAppointment.id, appointmentData);
         } else {
+          console.log('🔍 AppointmentCalendar.handleSaveAppointment() - Création d\'un nouveau rendez-vous');
           await AppointmentService.create(appointmentData as any);
         }
+        console.log('✅ AppointmentCalendar.handleSaveAppointment() - Rendez-vous sauvegardé, rechargement des données');
         await loadData();
         setShowAppointmentForm(false);
         setEditingAppointment(null);
       } catch (error) {
+        console.error('❌ AppointmentCalendar.handleSaveAppointment() - Erreur lors de la sauvegarde du rendez-vous:', error);
         console.error('Error saving appointment:', error);
         alert('Erreur lors de la sauvegarde du rendez-vous');
       }
@@ -99,9 +110,12 @@ export function AppointmentCalendar() {
   const handleDeleteAppointment = async (appointmentId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
       try {
+        console.log('🔍 AppointmentCalendar.handleDeleteAppointment() - Suppression du rendez-vous:', appointmentId);
         await AppointmentService.delete(appointmentId);
+        console.log('✅ AppointmentCalendar.handleDeleteAppointment() - Rendez-vous supprimé, rechargement des données');
         await loadData();
       } catch (error) {
+        console.error('❌ AppointmentCalendar.handleDeleteAppointment() - Erreur lors de la suppression du rendez-vous:', error);
         console.error('Error deleting appointment:', error);
         alert('Erreur lors de la suppression du rendez-vous');
       }
@@ -110,9 +124,12 @@ export function AppointmentCalendar() {
 
   const handleUpdateStatus = async (appointmentId: string, status: string) => {
     try {
+      console.log('🔍 AppointmentCalendar.handleUpdateStatus() - Mise à jour du statut du rendez-vous:', appointmentId, 'nouveau statut:', status);
       await AppointmentService.update(appointmentId, { status: status as any });
+      console.log('✅ AppointmentCalendar.handleUpdateStatus() - Statut mis à jour, rechargement des données');
       await loadData();
     } catch (error) {
+      console.error('❌ AppointmentCalendar.handleUpdateStatus() - Erreur lors de la mise à jour du statut:', error);
       console.error('Error updating appointment status:', error);
       alert('Erreur lors de la mise à jour du statut');
     }

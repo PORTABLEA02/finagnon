@@ -38,6 +38,7 @@ export function PrescriptionList() {
   };
 
   const getMedicalRecordsWithPrescriptions = async () => {
+    console.log('🔍 PrescriptionList.getMedicalRecordsWithPrescriptions() - Récupération des dossiers médicaux avec prescriptions');
     const { data, error } = await supabase
       .from('medical_records')
       .select(`
@@ -47,14 +48,18 @@ export function PrescriptionList() {
       .order('date', { ascending: false });
 
     if (error) {
+      console.error('❌ PrescriptionList.getMedicalRecordsWithPrescriptions() - Erreur lors de la récupération:', error);
       console.error('Error fetching medical records:', error);
       throw error;
     }
 
     // Filtrer seulement les consultations qui ont des prescriptions
-    return (data || []).filter(record => 
+    const recordsWithPrescriptions = (data || []).filter(record => 
       record.prescriptions && record.prescriptions.length > 0
     );
+    
+    console.log('✅ PrescriptionList.getMedicalRecordsWithPrescriptions() - Dossiers avec prescriptions récupérés:', recordsWithPrescriptions.length, 'dossiers');
+    return recordsWithPrescriptions;
   };
 
   const filteredConsultations = consultations.filter(consultation => {

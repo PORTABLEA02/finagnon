@@ -29,6 +29,7 @@ export function ConsultationList({ onNewConsultation, onViewConsultation, onEdit
 
   const loadData = async () => {
     try {
+      console.log('🔍 ConsultationList.loadData() - Début du chargement des données de consultation');
       setLoading(true);
       const [consultationsData, patientsData, doctorsData] = await Promise.all([
         MedicalRecordService.getAll(),
@@ -36,10 +37,16 @@ export function ConsultationList({ onNewConsultation, onViewConsultation, onEdit
         ProfileService.getDoctors()
       ]);
       
+      console.log('✅ ConsultationList.loadData() - Données de consultation chargées:', {
+        consultations: consultationsData.length,
+        patients: patientsData.length,
+        doctors: doctorsData.length
+      });
       setConsultations(consultationsData);
       setPatients(patientsData);
       setDoctors(doctorsData);
     } catch (error) {
+      console.error('❌ ConsultationList.loadData() - Erreur lors du chargement des données de consultation:', error);
       console.error('Erreur lors du chargement des données:', error);
     } finally {
       setLoading(false);
@@ -49,9 +56,12 @@ export function ConsultationList({ onNewConsultation, onViewConsultation, onEdit
   const handleDelete = async (id: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette consultation ?')) {
       try {
+        console.log('🔍 ConsultationList.handleDelete() - Suppression de la consultation:', id);
         await MedicalRecordService.delete(id);
+        console.log('✅ ConsultationList.handleDelete() - Consultation supprimée, rechargement des données');
         await loadData();
       } catch (error) {
+        console.error('❌ ConsultationList.handleDelete() - Erreur lors de la suppression de la consultation:', error);
         console.error('Erreur lors de la suppression:', error);
         alert('Erreur lors de la suppression de la consultation');
       }

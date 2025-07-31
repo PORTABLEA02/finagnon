@@ -74,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const initializeAuth = async () => {
     try {
+      console.log('🔍 AuthContext.initializeAuth() - Début de l\'initialisation de l\'authentification');
       console.log('Initializing auth...');
       setLoading(true);
 
@@ -82,6 +83,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedUser = storage.get(STORAGE_KEYS.USER_PROFILE);
       const storedAuthState = storage.get(STORAGE_KEYS.AUTH_STATE);
 
+      console.log('🔍 AuthContext.initializeAuth() - Données stockées localement:', { 
+        hasSession: !!storedSession, 
+        hasUser: !!storedUser, 
+        authState: storedAuthState 
+      });
       console.log('Stored data:', { 
         hasSession: !!storedSession, 
         hasUser: !!storedUser, 
@@ -89,9 +95,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       // 2. Vérifier la session Supabase
+      console.log('🔍 AuthContext.initializeAuth() - Vérification de la session Supabase');
       const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
+        console.error('❌ AuthContext.initializeAuth() - Erreur lors de la récupération de la session:', sessionError);
         console.error('Error getting session:', sessionError);
         clearAuthData();
         setLoading(false);
@@ -99,6 +107,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      console.log('🔍 AuthContext.initializeAuth() - Session actuelle:', { 
+        hasSession: !!currentSession, 
+        userId: currentSession?.user?.id 
+      });
       console.log('Current session:', { 
         hasSession: !!currentSession, 
         userId: currentSession?.user?.id 
@@ -106,39 +118,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // 3. Si on a une session valide
       if (currentSession?.user) {
+        console.log('✅ AuthContext.initializeAuth() - Session valide trouvée, mise à jour des données');
         setSession(currentSession);
         storage.set(STORAGE_KEYS.SESSION, currentSession);
 
         // Utiliser le profil stocké s'il est valide, sinon le récupérer
         if (storedUser && storedUser.id === currentSession.user.id) {
+          console.log('✅ AuthContext.initializeAuth() - Utilisation du profil utilisateur stocké');
           console.log('Using stored user profile');
           setUser(storedUser);
         } else {
+          console.log('🔍 AuthContext.initializeAuth() - Récupération d\'un nouveau profil utilisateur');
           console.log('Fetching fresh user profile');
           const userProfile = await getUserProfile(currentSession.user.id);
           if (userProfile) {
+            console.log('✅ AuthContext.initializeAuth() - Profil utilisateur récupéré et stocké');
             setUser(userProfile);
             storage.set(STORAGE_KEYS.USER_PROFILE, userProfile);
           } else {
+            console.error('❌ AuthContext.initializeAuth() - Échec de la récupération du profil utilisateur');
             console.error('Failed to get user profile');
             clearAuthData();
           }
         }
       } else {
         // 4. Pas de session valide, nettoyer les données
+        console.log('⚠️ AuthContext.initializeAuth() - Aucune session valide, nettoyage des données d\'authentification');
         console.log('No valid session, clearing auth data');
         clearAuthData();
       }
     } catch (error) {
+      console.error('❌ AuthContext.initializeAuth() - Exception lors de l\'initialisation de l\'authentification:', error);
       console.error('Error in initializeAuth:', error);
       clearAuthData();
     } finally {
+      console.log('✅ AuthContext.initializeAuth() - Initialisation de l\'authentification terminée');
       setLoading(false);
       setInitialized(true);
     }
   };
 
   const clearAuthData = () => {
+    console.log('🔍 AuthContext.clearAuthData() - Nettoyage des données d\'authentification');
     setSession(null);
     setUser(null);
     storage.clear();
@@ -148,26 +169,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!initialized) return;
     
     try {
+      console.log('🔍 AuthContext.refreshAuth() - Actualisation de l\'authentification');
       setLoading(true);
       const { data: { session }, error } = await supabase.auth.refreshSession();
       
       if (error) {
+        console.error('❌ AuthContext.refreshAuth() - Erreur lors de l\'actualisation de la session:', error);
         console.error('Error refreshing session:', error);
         clearAuthData();
         return;
       }
 
       if (session?.user) {
+        console.log('✅ AuthContext.refreshAuth() - Session actualisée avec succès');
         setSession(session);
         storage.set(STORAGE_KEYS.SESSION, session);
         
         const userProfile = await getUserProfile(session.user.id);
         if (userProfile) {
+          console.log('✅ AuthContext.refreshAuth() - Profil utilisateur actualisé');
           setUser(userProfile);
           storage.set(STORAGE_KEYS.USER_PROFILE, userProfile);
         }
       }
     } catch (error) {
+      console.error('❌ AuthContext.refreshAuth() - Exception lors de l\'actualisation de l\'authentification:', error);
       console.error('Error in refreshAuth:', error);
       clearAuthData();
     } finally {
@@ -272,6 +298,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log('🔍 AuthContext.login() - Tentative de connexion pour:', email);
       setLoading(true);
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -280,29 +307,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
+        console.error('❌ AuthContext.login() - Erreur lors de la connexion:', error);
         console.error('Login error:', error);
         clearAuthData();
         return false;
       }
 
       if (data.user) {
+        console.log('✅ AuthContext.login() - Connexion réussie, récupération du profil utilisateur');
         setSession(data.session);
         storage.set(STORAGE_KEYS.SESSION, data.session);
         
         const userProfile = await getUserProfile(data.user.id);
         if (userProfile) {
+          console.log('✅ AuthContext.login() - Profil utilisateur récupéré et stocké');
           setUser(userProfile);
           storage.set(STORAGE_KEYS.USER_PROFILE, userProfile);
           storage.set(STORAGE_KEYS.AUTH_STATE, { 
             isAuthenticated: true, 
             lastUpdate: new Date().toISOString() 
           });
+        } else {
+          console.error('❌ AuthContext.login() - Échec de la récupération du profil utilisateur après connexion');
         }
         return true;
       }
 
+      console.log('⚠️ AuthContext.login() - Connexion échouée, aucun utilisateur retourné');
       return false;
     } catch (error) {
+      console.error('❌ AuthContext.login() - Exception lors de la connexion:', error);
       console.error('Login exception:', error);
       clearAuthData();
       return false;
@@ -323,6 +357,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      console.log('🔍 AuthContext.signUp() - Tentative de création de compte pour:', email, 'rôle:', userData.role);
       setLoading(true);
 
       // Créer le compte utilisateur
@@ -341,11 +376,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
+        console.error('❌ AuthContext.signUp() - Erreur lors de la création du compte:', error);
         console.error('SignUp error:', error);
         return { success: false, error: error.message };
       }
 
       if (data.user) {
+        console.log('✅ AuthContext.signUp() - Compte utilisateur créé, création du profil');
         // Créer le profil utilisateur dans la table profiles
         try {
           const { error: profileError } = await supabase
@@ -362,19 +399,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
 
           if (profileError) {
+            console.error('❌ AuthContext.signUp() - Erreur lors de la création du profil:', profileError);
             console.error('Profile creation error:', profileError);
             return { success: false, error: 'Erreur lors de la création du profil' };
           }
 
+          console.log('✅ AuthContext.signUp() - Profil utilisateur créé avec succès');
           return { success: true };
         } catch (profileError) {
+          console.error('❌ AuthContext.signUp() - Exception lors de la création du profil:', profileError);
           console.error('Profile creation exception:', profileError);
           return { success: false, error: 'Erreur lors de la création du profil' };
         }
       }
 
+      console.log('⚠️ AuthContext.signUp() - Création de compte échouée, aucun utilisateur retourné');
       return { success: false, error: 'Erreur inconnue lors de la création du compte' };
     } catch (error) {
+      console.error('❌ AuthContext.signUp() - Exception lors de la création du compte:', error);
       console.error('SignUp exception:', error);
       return { success: false, error: 'Erreur lors de la création du compte' };
     } finally {
@@ -384,6 +426,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async (): Promise<void> => {
     try {
+      console.log('🔍 AuthContext.logout() - Début de la déconnexion');
       setLoading(true);
       
       // Nettoyer le localStorage avant de se déconnecter
@@ -392,9 +435,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        console.error('❌ AuthContext.logout() - Erreur lors de la déconnexion:', error);
         console.error('Logout error:', error);
+      } else {
+        console.log('✅ AuthContext.logout() - Déconnexion réussie');
       }
     } catch (error) {
+      console.error('❌ AuthContext.logout() - Exception lors de la déconnexion:', error);
       console.error('Logout exception:', error);
     } finally {
       setLoading(false);

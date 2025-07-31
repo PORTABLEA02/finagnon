@@ -24,10 +24,13 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
 
   const loadPatients = async () => {
     try {
+      console.log('🔍 PatientList.loadPatients() - Début du chargement de la liste des patients');
       setLoading(true);
       const data = await PatientService.getAll();
+      console.log('✅ PatientList.loadPatients() - Patients chargés avec succès:', data.length, 'patients');
       setPatients(data);
     } catch (error) {
+      console.error('❌ PatientList.loadPatients() - Erreur lors du chargement des patients:', error);
       console.error('Error loading patients:', error);
     } finally {
       setLoading(false);
@@ -101,9 +104,12 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
   const handleDeletePatient = async (patientId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible.')) {
       try {
+        console.log('🔍 PatientList.handleDeletePatient() - Suppression du patient:', patientId);
         await PatientService.delete(patientId);
+        console.log('✅ PatientList.handleDeletePatient() - Patient supprimé, rechargement de la liste');
         await loadPatients();
       } catch (error) {
+        console.error('❌ PatientList.handleDeletePatient() - Erreur lors de la suppression du patient:', error);
         console.error('Error deleting patient:', error);
         alert('Erreur lors de la suppression du patient');
       }

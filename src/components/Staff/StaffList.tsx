@@ -26,10 +26,13 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
 
   const loadStaff = async () => {
     try {
+      console.log('🔍 StaffList.loadStaff() - Début du chargement de la liste du personnel');
       setLoading(true);
       const data = await ProfileService.getAll();
+      console.log('✅ StaffList.loadStaff() - Personnel chargé avec succès:', data.length, 'membres');
       setStaff(data);
     } catch (error) {
+      console.error('❌ StaffList.loadStaff() - Erreur lors du chargement du personnel:', error);
       console.error('Error loading staff:', error);
     } finally {
       setLoading(false);
@@ -91,12 +94,16 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
   const handleToggleStatus = (staffId: string) => {
     const updateStatus = async () => {
       try {
+        console.log('🔍 StaffList.handleToggleStatus() - Changement de statut pour le personnel:', staffId);
         const member = staff.find(s => s.id === staffId);
         if (member) {
+          console.log('🔍 StaffList.handleToggleStatus() - Nouveau statut:', !member.is_active);
           await ProfileService.update(staffId, { is_active: !member.is_active });
+          console.log('✅ StaffList.handleToggleStatus() - Statut mis à jour, rechargement de la liste');
           await loadStaff();
         }
       } catch (error) {
+        console.error('❌ StaffList.handleToggleStatus() - Erreur lors de la mise à jour du statut:', error);
         console.error('Error updating staff status:', error);
         alert('Erreur lors de la mise à jour du statut');
       }
@@ -108,10 +115,13 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce membre du personnel ?')) {
       const deleteStaff = async () => {
         try {
+          console.log('🔍 StaffList.handleDeleteStaff() - Désactivation du personnel (suppression logique):', staffId);
           // Note: Dans un vrai système, on désactiverait plutôt que de supprimer
           await ProfileService.update(staffId, { is_active: false });
+          console.log('✅ StaffList.handleDeleteStaff() - Personnel désactivé, rechargement de la liste');
           await loadStaff();
         } catch (error) {
+          console.error('❌ StaffList.handleDeleteStaff() - Erreur lors de la suppression du personnel:', error);
           console.error('Error deleting staff:', error);
           alert('Erreur lors de la suppression du personnel');
         }

@@ -23,10 +23,13 @@ export function ProductList({ onSelectProduct, onNewProduct, onEditProduct, onSt
 
   const loadProducts = async () => {
     try {
+      console.log('🔍 ProductList.loadProducts() - Début du chargement de la liste des produits');
       setLoading(true);
       const data = await MedicineService.getAll();
+      console.log('✅ ProductList.loadProducts() - Produits chargés avec succès:', data.length, 'produits');
       setProducts(data);
     } catch (error) {
+      console.error('❌ ProductList.loadProducts() - Erreur lors du chargement des produits:', error);
       console.error('Error loading products:', error);
     } finally {
       setLoading(false);
@@ -36,9 +39,12 @@ export function ProductList({ onSelectProduct, onNewProduct, onEditProduct, onSt
   const handleDeleteProduct = async (productId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       try {
+        console.log('🔍 ProductList.handleDeleteProduct() - Suppression du produit:', productId);
         await MedicineService.delete(productId);
+        console.log('✅ ProductList.handleDeleteProduct() - Produit supprimé, rechargement de la liste');
         await loadProducts();
       } catch (error) {
+        console.error('❌ ProductList.handleDeleteProduct() - Erreur lors de la suppression du produit:', error);
         console.error('Error deleting product:', error);
         alert('Erreur lors de la suppression du produit');
       }

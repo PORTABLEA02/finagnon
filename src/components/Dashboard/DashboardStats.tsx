@@ -77,6 +77,7 @@ export function DashboardStats() {
 
   const loadStats = async () => {
     try {
+      console.log('🔍 DashboardStats.loadStats() - Début du chargement des statistiques du tableau de bord');
       const [
         appointmentStats,
         billingStats,
@@ -89,6 +90,13 @@ export function DashboardStats() {
         PatientService.getAll()
       ]);
 
+      console.log('✅ DashboardStats.loadStats() - Toutes les statistiques chargées avec succès');
+      console.log('📊 DashboardStats.loadStats() - Résumé des statistiques:', {
+        patients: patientsData.length,
+        appointmentsToday: appointmentStats.today.total,
+        monthlyRevenue: billingStats.monthlyRevenue,
+        lowStockItems: inventoryStats.lowStockItems
+      });
       setStats([
         {
           title: 'Patients Total',
@@ -124,6 +132,7 @@ export function DashboardStats() {
         }
       ]);
     } catch (error) {
+      console.error('❌ DashboardStats.loadStats() - Erreur lors du chargement des statistiques:', error);
       console.error('Error loading dashboard stats:', error);
     }
   };
