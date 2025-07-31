@@ -3,7 +3,11 @@ import { ProductList } from './ProductList';
 import { ProductForm } from './ProductForm';
 import { StockMovementForm } from './StockMovementForm';
 import { InventoryStats } from './InventoryStats';
-import { Medicine, StockMovement } from '../../types';
+import { MedicineService } from '../../services/medicines';
+import { Database } from '../../lib/database.types';
+
+type Medicine = Database['public']['Tables']['medicines']['Row'];
+type StockMovement = Database['public']['Tables']['stock_movements']['Row'];
 
 export function InventoryManager() {
   const [activeView, setActiveView] = useState<'list' | 'stats'>('list');
@@ -33,17 +37,35 @@ export function InventoryManager() {
   };
 
   const handleSaveProduct = (productData: Partial<Medicine>) => {
-    console.log('Saving product:', productData);
-    // TODO: Implement save logic
-    setShowProductForm(false);
-    setEditingProduct(null);
+    const saveProduct = async () => {
+      try {
+        if (editingProduct) {
+          await MedicineService.update(editingProduct.id, productData);
+        } else {
+          await MedicineService.create(productData as any);
+        }
+        setShowProductForm(false);
+        setEditingProduct(null);
+      } catch (error) {
+        console.error('Error saving product:', error);
+        alert('Erreur lors de la sauvegarde du produit');
+      }
+    };
+    saveProduct();
   };
 
   const handleSaveStockMovement = (movementData: Partial<StockMovement>) => {
-    console.log('Saving stock movement:', movementData);
-    // TODO: Implement save logic
-    setShowStockForm(false);
-    setSelectedProduct(null);
+    const saveMovement = async () => {
+      try {
+        await MedicineService.addStockMovement(movementData as any);
+        setShowStockForm(false);
+        setSelectedProduct(null);
+      } catch (error) {
+        console.error('Error saving stock movement:', error);
+        alert('Erreur lors de la sauvegarde du mouvement de stock');
+      }
+    };
+    saveMovement();
   };
 
   const handleCloseProductForm = () => {

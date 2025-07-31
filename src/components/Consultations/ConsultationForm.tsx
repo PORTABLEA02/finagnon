@@ -1,40 +1,12 @@
 import React, { useState } from 'react';
 import { X, Save, Plus, Trash2, User, Calendar, FileText, Pill } from 'lucide-react';
-import { MedicalRecord, Prescription, Patient } from '../../types';
+import { Database } from '../../lib/database.types';
+import { PatientService } from '../../services/patients';
+import { useAuth } from '../../context/AuthContext';
 
-// Mock patients data
-const MOCK_PATIENTS: Patient[] = [
-  {
-    id: '1',
-    firstName: 'Jean',
-    lastName: 'Nguema',
-    dateOfBirth: '1985-03-15',
-    gender: 'M',
-    phone: '+237 690 123 456',
-    email: 'jean.nguema@email.com',
-    address: 'Yaoundé, Quartier Bastos',
-    emergencyContact: '+237 690 654 321',
-    bloodType: 'A+',
-    allergies: ['Pénicilline'],
-    medicalHistory: [],
-    createdAt: '2024-01-15T00:00:00Z'
-  },
-  {
-    id: '2',
-    firstName: 'Marie',
-    lastName: 'Atangana',
-    dateOfBirth: '1992-07-22',
-    gender: 'F',
-    phone: '+237 690 987 654',
-    email: 'marie.atangana@email.com',
-    address: 'Douala, Akwa',
-    emergencyContact: '+237 690 111 222',
-    bloodType: 'O-',
-    allergies: [],
-    medicalHistory: [],
-    createdAt: '2024-01-10T00:00:00Z'
-  }
-];
+type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
+type Prescription = Database['public']['Tables']['prescriptions']['Row'];
 
 interface ConsultationFormProps {
   consultation?: MedicalRecord;
@@ -44,7 +16,7 @@ interface ConsultationFormProps {
 
 export function ConsultationForm({ consultation, onClose, onSave }: ConsultationFormProps) {
   const [formData, setFormData] = useState({
-    patientId: consultation?.patientId || '',
+    patient_id: consultation?.patient_id || '',
     date: consultation?.date || new Date().toISOString().split('T')[0],
     type: consultation?.type || 'general',
     reason: consultation?.reason || '',
@@ -54,11 +26,12 @@ export function ConsultationForm({ consultation, onClose, onSave }: Consultation
     notes: consultation?.notes || ''
   });
 
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(
-    consultation?.prescription || []
-  );
+  const [prescriptions, setPrescriptions] = useState<Omit<Prescription, 'id' | 'medical_record_id' | 'created_at'>[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const [newPrescription, setNewPrescription] = useState<Prescription>({
+  const [newPrescription, setNewPrescription] = useState({
     medication: '',
     dosage: '',
     frequency: '',
@@ -66,11 +39,28 @@ export function ConsultationForm({ consultation, onClose, onSave }: Consultation
     instructions: ''
   });
 
+  React.useEffect(() => {
+    loadPatients();
+  }, []);
+
+  const loadPatients = async () => {
+    try {
+      setLoading(true);
+      const data = await PatientService.getAll();
+      setPatients(data);
+    } catch (error) {
+      console.error('Error loading patients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
       ...formData,
-      prescription: prescriptions
+      doctor_id: user?.id || '',
+      prescriptions
     });
   };
 
@@ -95,11 +85,24 @@ export function ConsultationForm({ consultation, onClose, onSave }: Consultation
     setPrescriptions(prescriptions.filter((_, i) => i !== index));
   };
 
-  const getPatientInfo = (patientId: string) => {
-    return MOCK_PATIENTS.find(p => p.id === patientId);
+  const getPatientInfo = (patient_id: string) => {
+    return patients.find(p => p.id === patient_id);
   };
 
-  const selectedPatient = getPatientInfo(formData.patientId);
+  const selectedPatient = getPatientInfo(formData.patient_id);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -130,16 +133,16 @@ export function ConsultationForm({ consultation, onClose, onSave }: Consultation
                   Patient *
                 </label>
                 <select
-                  name="patientId"
-                  value={formData.patientId}
+                  name="patient_id"
+                  value={formData.patient_id}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Sélectionner un patient</option>
-                  {MOCK_PATIENTS.map(patient => (
+                  {patients.map(patient => (
                     <option key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName}
+                      {patient.first_name} {patient.last_name}
                     </option>
                   ))}
                 </select>
@@ -186,12 +189,12 @@ export function ConsultationForm({ consultation, onClose, onSave }: Consultation
                   <div>
                     <span className="font-medium text-gray-700">Âge: </span>
                     <span className="text-gray-900">
-                      {new Date().getFullYear() - new Date(selectedPatient.dateOfBirth).getFullYear()} ans
+                      {new Date().getFullYear() - new Date(selectedPatient.date_of_birth).getFullYear()} ans
                     </span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Groupe sanguin: </span>
-                    <span className="text-gray-900">{selectedPatient.bloodType || 'Non défini'}</span>
+                    <span className="text-gray-900">{selectedPatient.blood_type || 'Non défini'}</span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Téléphone: </span>

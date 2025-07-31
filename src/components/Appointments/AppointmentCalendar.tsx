@@ -96,6 +96,28 @@ export function AppointmentCalendar() {
     saveAppointment();
   };
 
+  const handleDeleteAppointment = async (appointmentId: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
+      try {
+        await AppointmentService.delete(appointmentId);
+        await loadData();
+      } catch (error) {
+        console.error('Error deleting appointment:', error);
+        alert('Erreur lors de la suppression du rendez-vous');
+      }
+    }
+  };
+
+  const handleUpdateStatus = async (appointmentId: string, status: string) => {
+    try {
+      await AppointmentService.update(appointmentId, { status: status as any });
+      await loadData();
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      alert('Erreur lors de la mise à jour du statut');
+    }
+  };
+
   const handleCloseForm = () => {
     setShowAppointmentForm(false);
     setEditingAppointment(null);
@@ -189,11 +211,17 @@ export function AppointmentCalendar() {
                           >
                             Modifier
                           </button>
-                          <button className="text-green-600 hover:text-green-800 text-sm font-medium px-2 py-1 rounded">
+                          <button 
+                            onClick={() => handleUpdateStatus(appointment.id, 'confirmed')}
+                            className="text-green-600 hover:text-green-800 text-sm font-medium px-2 py-1 rounded"
+                          >
                             Confirmer
                           </button>
-                          <button className="text-red-600 hover:text-red-800 text-sm font-medium px-2 py-1 rounded">
-                            Annuler
+                          <button 
+                            onClick={() => handleDeleteAppointment(appointment.id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium px-2 py-1 rounded"
+                          >
+                            Supprimer
                           </button>
                         </div>
                       </div>

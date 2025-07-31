@@ -4,15 +4,18 @@ import { StaffForm } from './StaffForm';
 import { StaffDetail } from './StaffDetail';
 import { StaffSchedule } from './StaffSchedule';
 import { StaffStats } from './StaffStats';
-import { User } from '../../types';
+import { Database } from '../../lib/database.types';
+import { ProfileService } from '../../services/profiles';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export function StaffManager() {
   const [activeView, setActiveView] = useState<'list' | 'schedule' | 'stats'>('list');
-  const [selectedStaff, setSelectedStaff] = useState<User | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<Profile | null>(null);
   const [showStaffForm, setShowStaffForm] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<User | null>(null);
+  const [editingStaff, setEditingStaff] = useState<Profile | null>(null);
 
-  const handleSelectStaff = (staff: User) => {
+  const handleSelectStaff = (staff: Profile) => {
     setSelectedStaff(staff);
   };
 
@@ -21,17 +24,30 @@ export function StaffManager() {
     setShowStaffForm(true);
   };
 
-  const handleEditStaff = (staff: User) => {
+  const handleEditStaff = (staff: Profile) => {
     setEditingStaff(staff);
     setSelectedStaff(null);
     setShowStaffForm(true);
   };
 
-  const handleSaveStaff = (staffData: Partial<User>) => {
-    console.log('Saving staff:', staffData);
-    // TODO: Implement save logic
-    setShowStaffForm(false);
-    setEditingStaff(null);
+  const handleSaveStaff = (staffData: Partial<Profile>) => {
+    const saveStaff = async () => {
+      try {
+        if (editingStaff) {
+          await ProfileService.update(editingStaff.id, staffData);
+        } else {
+          // Pour créer un nouveau staff, il faudrait utiliser l'API d'authentification
+          // Cette partie nécessite une implémentation plus complexe
+          console.log('Creating new staff member:', staffData);
+        }
+        setShowStaffForm(false);
+        setEditingStaff(null);
+      } catch (error) {
+        console.error('Error saving staff:', error);
+        alert('Erreur lors de la sauvegarde du personnel');
+      }
+    };
+    saveStaff();
   };
 
   const handleCloseForm = () => {

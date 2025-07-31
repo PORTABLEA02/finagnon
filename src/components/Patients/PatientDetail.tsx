@@ -1,54 +1,11 @@
 import React from 'react';
 import { X, User, Phone, Mail, MapPin, Heart, AlertTriangle, Calendar, FileText, Pill, Clock } from 'lucide-react';
-import { Patient, MedicalRecord } from '../../types';
+import { Database } from '../../lib/database.types';
+import { supabase } from '../../lib/supabase';
 
-// Mock medical history data
-const MOCK_MEDICAL_HISTORY: MedicalRecord[] = [
-  {
-    id: '1',
-    patientId: '1',
-    doctorId: '2',
-    date: '2024-01-15',
-    type: 'general',
-    reason: 'Consultation de routine',
-    symptoms: 'Fatigue générale, maux de tête occasionnels',
-    diagnosis: 'État général satisfaisant, stress léger',
-    treatment: 'Repos, réduction du stress, suivi dans 3 mois',
-    prescription: [
-      {
-        medication: 'Magnésium 300mg',
-        dosage: '1 comprimé',
-        frequency: '2 fois par jour',
-        duration: '30 jours',
-        instructions: 'À prendre avec les repas'
-      }
-    ],
-    notes: 'Patient en bonne santé générale, recommandations d\'hygiène de vie',
-    attachments: []
-  },
-  {
-    id: '2',
-    patientId: '1',
-    doctorId: '2',
-    date: '2023-12-10',
-    type: 'specialist',
-    reason: 'Douleurs abdominales',
-    symptoms: 'Douleurs abdominales récurrentes, ballonnements',
-    diagnosis: 'Syndrome du côlon irritable',
-    treatment: 'Régime alimentaire adapté, probiotiques',
-    prescription: [
-      {
-        medication: 'Probiotiques',
-        dosage: '1 gélule',
-        frequency: '1 fois par jour',
-        duration: '60 jours',
-        instructions: 'À prendre le matin à jeun'
-      }
-    ],
-    notes: 'Éviter les aliments épicés et les légumineuses',
-    attachments: []
-  }
-];
+type Patient = Database['public']['Tables']['patients']['Row'];
+type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
+type Prescription = Database['public']['Tables']['prescriptions']['Row'];
 
 interface PatientDetailProps {
   patient: Patient;
@@ -57,6 +14,38 @@ interface PatientDetailProps {
 }
 
 export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) {
+  const [medicalHistory, setMedicalHistory] = useState<(MedicalRecord & { prescriptions: Prescription[] })[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    loadMedicalHistory();
+  }, [patient.id]);
+
+  const loadMedicalHistory = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('medical_records')
+        .select(`
+          *,
+          prescriptions(*)
+        `)
+        .eq('patient_id', patient.id)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error loading medical history:', error);
+        return;
+      }
+
+      setMedicalHistory(data || []);
+    } catch (error) {
+      console.error('Error loading medical history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
@@ -67,8 +56,6 @@ export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) 
     }
     return age;
   };
-
-  const patientHistory = MOCK_MEDICAL_HISTORY.filter(record => record.patientId === patient.id);
 
   const getConsultationTypeLabel = (type: string) => {
     const types = {
@@ -137,15 +124,15 @@ export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) 
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-600">Nom complet</label>
-                  <p className="text-gray-900 font-medium">{patient.firstName} {patient.lastName}</p>
+                  <p className="text-gray-900 font-medium">{patient.first_name} {patient.last_name}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Date de naissance</label>
-                  <p className="text-gray-900">{new Date(patient.dateOfBirth).toLocaleDateString('fr-FR')}</p>
+                  <p className="text-gray-900">{new Date(patient.date_of_birth).toLocaleDateString('fr-FR')}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Âge</label>
-                  <p className="text-gray-900">{calculateAge(patient.dateOfBirth)} ans</p>
+                  <p className="text-gray-900">{calculateAge(patient.date_of_birth)} ans</p>
                 </div>
               </div>
 
@@ -182,11 +169,11 @@ export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) 
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Contact d'urgence</label>
-                  <p className="text-gray-900">{patient.emergencyContact}</p>
+                  <p className="text-gray-900">{patient.emergency_contact}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Inscrit le</label>
-                  <p className="text-gray-900">{new Date(patient.createdAt).toLocaleDateString('fr-FR')}</p>
+                  <p className="text-gray-900">{new Date(patient.created_at).toLocaleDateString('fr-FR')}</p>
                 </div>
               </div>
             </div>
@@ -205,7 +192,7 @@ export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) 
                 <div className="mt-1">
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
                     <Heart className="h-4 w-4 mr-1" />
-                    {patient.bloodType || 'Non défini'}
+                    {patient.blood_type || 'Non défini'}
                   </span>
                 </div>
               </div>
@@ -237,12 +224,17 @@ export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) 
           <div className="bg-green-50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center">
               <FileText className="h-5 w-5 mr-2" />
-              Historique Médical ({patientHistory.length} consultations)
+              Historique Médical ({medicalHistory.length} consultations)
             </h3>
             
-            {patientHistory.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                <p className="text-gray-500 mt-2">Chargement de l'historique...</p>
+              </div>
+            ) : medicalHistory.length > 0 ? (
               <div className="space-y-4">
-                {patientHistory
+                {medicalHistory
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                   .map((record) => (
                     <div key={record.id} className="bg-white rounded-lg p-4 border border-green-200">
@@ -285,14 +277,14 @@ export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) 
                           </div>
                         )}
 
-                        {record.prescription.length > 0 && (
+                        {record.prescriptions && record.prescriptions.length > 0 && (
                           <div>
                             <span className="text-sm font-medium text-gray-700 flex items-center mb-2">
                               <Pill className="h-4 w-4 mr-1" />
                               Prescription:
                             </span>
                             <div className="bg-gray-50 rounded p-3 space-y-2">
-                              {record.prescription.map((prescription, index) => (
+                              {record.prescriptions.map((prescription, index) => (
                                 <div key={index} className="text-sm">
                                   <span className="font-medium text-gray-900">{prescription.medication}</span>
                                   <span className="text-gray-600"> - {prescription.dosage}, {prescription.frequency}, {prescription.duration}</span>
@@ -334,12 +326,12 @@ export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) 
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-white rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{patientHistory.length}</div>
+                <div className="text-2xl font-bold text-blue-600">{medicalHistory.length}</div>
                 <div className="text-sm text-gray-600">Consultations</div>
               </div>
               <div className="bg-white rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {patientHistory.reduce((total, record) => total + record.prescription.length, 0)}
+                  {medicalHistory.reduce((total, record) => total + (record.prescriptions?.length || 0), 0)}
                 </div>
                 <div className="text-sm text-gray-600">Prescriptions</div>
               </div>
@@ -349,8 +341,8 @@ export function PatientDetail({ patient, onClose, onEdit }: PatientDetailProps) 
               </div>
               <div className="bg-white rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-purple-600">
-                  {patientHistory.length > 0 ? 
-                    Math.ceil((new Date().getTime() - new Date(patientHistory[patientHistory.length - 1].date).getTime()) / (1000 * 3600 * 24)) 
+                  {medicalHistory.length > 0 ? 
+                    Math.ceil((new Date().getTime() - new Date(medicalHistory[medicalHistory.length - 1].date).getTime()) / (1000 * 3600 * 24)) 
                     : 0}
                 </div>
                 <div className="text-sm text-gray-600">Jours depuis dernière visite</div>

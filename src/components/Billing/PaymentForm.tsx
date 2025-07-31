@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { X, Save, CreditCard, DollarSign, Calendar, User, CheckCircle } from 'lucide-react';
-import { Invoice } from '../../types';
+import { Database } from '../../lib/database.types';
+import { PatientService } from '../../services/patients';
 
-// Mock patients data
-const MOCK_PATIENTS = [
-  { id: '1', first_name: 'Jean', last_name: 'Nguema', phone: '+237 690 123 456' },
-  { id: '2', first_name: 'Marie', last_name: 'Atangana', phone: '+237 690 987 654' }
-];
+type Invoice = Database['public']['Tables']['invoices']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
 
 interface PaymentFormProps {
   invoice: Invoice;
@@ -24,13 +22,31 @@ export function PaymentForm({ invoice, onClose, onSave }: PaymentFormProps) {
   });
 
   const [partialPayment, setPartialPayment] = useState(false);
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    loadPatientInfo();
+  }, [invoice.patient_id]);
+
+  const loadPatientInfo = async () => {
+    try {
+      setLoading(true);
+      const patientData = await PatientService.getById(invoice.patient_id);
+      setPatient(patientData);
+    } catch (error) {
+      console.error('Error loading patient info:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
       ...paymentData,
       invoiceId: invoice.id,
-      patientId: invoice.patientId,
+      patientId: invoice.patient_id,
       isPartial: partialPayment && paymentData.amount < invoice.total
     });
   };
@@ -40,11 +56,6 @@ export function PaymentForm({ invoice, onClose, onSave }: PaymentFormProps) {
     setPaymentData({ ...paymentData, [name]: value });
   };
 
-  const getPatientInfo = (patientId: string) => {
-    return MOCK_PATIENTS.find(p => p.id === patientId);
-  };
-
-  const patient = getPatientInfo(invoice.patientId);
   const remainingAmount = invoice.total - paymentData.amount;
 
   const paymentMethods = [
@@ -61,6 +72,19 @@ export function PaymentForm({ invoice, onClose, onSave }: PaymentFormProps) {
     const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     return `${method}-${date}-${random}`;
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

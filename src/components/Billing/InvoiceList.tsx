@@ -78,6 +78,23 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
     return patients.find(p => p.id === patientId);
   };
 
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette facture ?')) {
+      try {
+        await InvoiceService.delete(invoiceId);
+        await loadData();
+      } catch (error) {
+        console.error('Error deleting invoice:', error);
+        alert('Erreur lors de la suppression de la facture');
+      }
+    }
+  };
+
+  const handlePrintInvoice = (invoice: Invoice) => {
+    // Logique d'impression
+    window.print();
+  };
+
   const getStatusLabel = (status: string) => {
     const labels = {
       pending: 'En attente',
@@ -350,10 +367,18 @@ export function InvoiceList({ onSelectInvoice, onNewInvoice, onEditInvoice, onPa
                         </button>
                       )}
                       <button
+                        onClick={() => handlePrintInvoice(invoice)}
                         className="text-purple-600 hover:text-purple-800 p-1 rounded transition-colors"
                         title="Imprimer"
                       >
                         <Printer className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteInvoice(invoice.id)}
+                        className="text-red-600 hover:text-red-800 p-1 rounded transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>

@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { ConsultationList } from './ConsultationList';
 import { ConsultationForm } from './ConsultationForm';
 import { ConsultationDetail } from './ConsultationDetail';
-import { MedicalRecord } from '../../types';
+import { MedicalRecordService } from '../../services/medical-records';
+import { Database } from '../../lib/database.types';
+
+type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
 
 export function ConsultationsManager() {
   const [selectedConsultation, setSelectedConsultation] = useState<MedicalRecord | null>(null);
@@ -27,10 +30,24 @@ export function ConsultationsManager() {
   };
 
   const handleSaveConsultation = (consultationData: Partial<MedicalRecord>) => {
-    console.log('Saving consultation:', consultationData);
-    // TODO: Implement save logic
-    setShowForm(false);
-    setEditingConsultation(null);
+    const saveConsultation = async () => {
+      try {
+        const { prescriptions, ...recordData } = consultationData as any;
+        
+        if (editingConsultation) {
+          await MedicalRecordService.update(editingConsultation.id, recordData);
+        } else {
+          await MedicalRecordService.create(recordData as any, prescriptions || []);
+        }
+        
+        setShowForm(false);
+        setEditingConsultation(null);
+      } catch (error) {
+        console.error('Error saving consultation:', error);
+        alert('Erreur lors de la sauvegarde de la consultation');
+      }
+    };
+    saveConsultation();
   };
 
   const handleCloseForm = () => {

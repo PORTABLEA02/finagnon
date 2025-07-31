@@ -1,40 +1,15 @@
 import React, { useState } from 'react';
 import { X, Save, Plus, Trash2, User, Calendar, DollarSign, Calculator, Package, Pill, Search, AlertTriangle } from 'lucide-react';
-import { Invoice, InvoiceItem, Patient, Medicine } from '../../types';
+import { Database } from '../../lib/database.types';
+import { PatientService } from '../../services/patients';
+import { MedicineService } from '../../services/medicines';
 
-// Mock patients data
-const MOCK_PATIENTS: Patient[] = [
-  {
-    id: '1',
-    first_name: 'Jean',
-    last_name: 'Nguema',
-    date_of_birth: '1985-03-15',
-    gender: 'M',
-    phone: '+237 690 123 456',
-    email: 'jean.nguema@email.com',
-    address: 'Yaoundé, Quartier Bastos',
-    emergency_contact: '+237 690 654 321',
-    blood_type: 'A+',
-    allergies: ['Pénicilline'],
-    created_at: '2024-01-15T00:00:00Z',
-    updated_at: '2024-01-15T00:00:00Z'
-  },
-  {
-    id: '2',
-    first_name: 'Marie',
-    last_name: 'Atangana',
-    date_of_birth: '1992-07-22',
-    gender: 'F',
-    phone: '+237 690 987 654',
-    email: 'marie.atangana@email.com',
-    address: 'Douala, Akwa',
-    emergency_contact: '+237 690 111 222',
-    blood_type: 'O-',
-    allergies: [],
-    created_at: '2024-01-10T00:00:00Z',
-    updated_at: '2024-01-10T00:00:00Z'
-  }
-];
+type Invoice = Database['public']['Tables']['invoices']['Row'] & {
+  invoice_items?: Database['public']['Tables']['invoice_items']['Row'][];
+};
+type InvoiceItem = Database['public']['Tables']['invoice_items']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
+type Medicine = Database['public']['Tables']['medicines']['Row'];
 
 // Services prédéfinis
 const PREDEFINED_SERVICES = [
@@ -50,98 +25,6 @@ const PREDEFINED_SERVICES = [
   { description: 'Vaccination', unitPrice: 10000 },
   { description: 'Pansement', unitPrice: 3000 },
   { description: 'Injection', unitPrice: 2000 }
-];
-
-// Mock medicines data (from inventory)
-const MOCK_MEDICINES: Medicine[] = [
-  {
-    id: '1',
-    name: 'Paracétamol 500mg',
-    category: 'medication',
-    manufacturer: 'Pharma Cameroun',
-    batch_number: 'PC2024001',
-    expiry_date: '2025-12-31',
-    current_stock: 50,
-    min_stock: 20,
-    unit_price: 250,
-    location: 'Pharmacie - Étagère A1',
-    unit: 'boîte',
-    description: 'Antalgique et antipyrétique',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    name: 'Amoxicilline 250mg',
-    category: 'medication',
-    manufacturer: 'MediCam',
-    batch_number: 'MC2024002',
-    expiry_date: '2025-06-30',
-    current_stock: 45,
-    min_stock: 30,
-    unit_price: 180,
-    location: 'Pharmacie - Étagère B2',
-    unit: 'boîte',
-    description: 'Antibiotique à large spectre',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: '3',
-    name: 'Seringues jetables 5ml',
-    category: 'medical-supply',
-    manufacturer: 'MedSupply',
-    batchNumber: 'MS2024003',
-    expiryDate: '2026-03-15',
-    currentStock: 150,
-    minStock: 100,
-    unitPrice: 50,
-    location: 'Salle de soins - Armoire 1',
-    unit: 'pièce',
-    description: 'Seringues stériles à usage unique'
-  },
-  {
-    id: '4',
-    name: 'Gants latex stériles',
-    category: 'medical-supply',
-    manufacturer: 'SafeHands',
-    batchNumber: 'SH2024004',
-    expiryDate: '2025-08-20',
-    currentStock: 80,
-    minStock: 20,
-    unitPrice: 1200,
-    location: 'Salle de soins - Armoire 2',
-    unit: 'boîte de 100',
-    description: 'Gants d\'examen en latex poudrés'
-  },
-  {
-    id: '5',
-    name: 'Compresses stériles 10x10cm',
-    category: 'medical-supply',
-    manufacturer: 'SterileSupply',
-    batchNumber: 'SS2024005',
-    expiryDate: '2025-11-30',
-    currentStock: 25,
-    minStock: 15,
-    unitPrice: 800,
-    location: 'Salle de soins - Étagère C1',
-    unit: 'paquet de 50',
-    description: 'Compresses de gaze stériles'
-  },
-  {
-    id: '6',
-    name: 'Alcool médical 70°',
-    category: 'consumable',
-    manufacturer: 'ChemMed',
-    batchNumber: 'CM2024007',
-    expiryDate: '2025-09-10',
-    currentStock: 12,
-    minStock: 8,
-    unitPrice: 2500,
-    location: 'Salle de soins - Armoire 3',
-    unit: 'litre',
-    description: 'Solution désinfectante'
-  }
 ];
 
 const CATEGORY_LABELS = {
@@ -160,33 +43,54 @@ interface InvoiceFormProps {
 
 export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
   const [formData, setFormData] = useState({
-    patientId: invoice?.patientId || '',
+    patient_id: invoice?.patient_id || '',
     date: invoice?.date || new Date().toISOString().split('T')[0],
-    appointmentId: invoice?.appointmentId || '',
+    appointment_id: invoice?.appointment_id || '',
     status: invoice?.status || 'pending',
     tax: invoice?.tax || 0
   });
 
-  const [items, setItems] = useState<InvoiceItem[]>(
-    invoice?.items || []
+  const [items, setItems] = useState<Omit<InvoiceItem, 'id' | 'invoice_id' | 'created_at'>[]>(
+    invoice?.invoice_items || []
   );
 
-  const [newItem, setNewItem] = useState<InvoiceItem>({
-    id: '',
-    invoice_id: '',
+  const [newItem, setNewItem] = useState({
     description: '',
     quantity: 1,
     unit_price: 0,
     total: 0,
-    created_at: ''
+    medicine_id: null as string | null
   });
 
   const [activeTab, setActiveTab] = useState<'services' | 'products'>('services');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [patientsData, medicinesData] = await Promise.all([
+        PatientService.getAll(),
+        MedicineService.getAll()
+      ]);
+      setPatients(patientsData);
+      setMedicines(medicinesData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filtrer les produits médicaux
-  const filteredMedicines = MOCK_MEDICINES.filter(medicine => {
+  const filteredMedicines = medicines.filter(medicine => {
     const matchesSearch = medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          medicine.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || medicine.category === selectedCategory;
@@ -223,15 +127,16 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
 
   const addItem = () => {
     if (newItem.description && newItem.quantity > 0 && newItem.unit_price > 0) {
-      setItems([...items, { ...newItem, total: newItem.quantity * newItem.unit_price }]);
+      setItems([...items, { 
+        ...newItem, 
+        total: newItem.quantity * newItem.unit_price 
+      }]);
       setNewItem({
-        id: '',
-        invoice_id: '',
         description: '',
         quantity: 1,
         unit_price: 0,
         total: 0,
-        created_at: ''
+        medicine_id: null
       });
     }
   };
@@ -254,15 +159,16 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
       ...newItem,
       description: `${product.name} (${product.unit})`,
       unit_price: product.unit_price,
-      total: newItem.quantity * product.unit_price
+      total: newItem.quantity * product.unit_price,
+      medicine_id: product.id
     });
   };
 
-  const getPatientInfo = (patientId: string) => {
-    return MOCK_PATIENTS.find(p => p.id === patientId);
+  const getPatientInfo = (patient_id: string) => {
+    return patients.find(p => p.id === patient_id);
   };
 
-  const selectedPatient = getPatientInfo(formData.patientId);
+  const selectedPatient = getPatientInfo(formData.patient_id);
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const total = subtotal + formData.tax;
 
@@ -275,12 +181,25 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
 
   // Vérifier les produits avec stock faible
   const getLowStockWarning = (productName: string) => {
-    const product = MOCK_MEDICINES.find(m => productName.includes(m.name));
+    const product = medicines.find(m => productName.includes(m.name));
     if (product && product.current_stock <= product.min_stock) {
       return `⚠️ Stock faible: ${product.current_stock} ${product.unit} restant(s)`;
     }
     return null;
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -313,14 +232,14 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                   Patient *
                 </label>
                 <select
-                  name="patientId"
-                  value={formData.patientId}
+                  name="patient_id"
+                  value={formData.patient_id}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Sélectionner un patient</option>
-                  {MOCK_PATIENTS.map(patient => (
+                  {patients.map(patient => (
                     <option key={patient.id} value={patient.id}>
                       {patient.first_name} {patient.last_name}
                     </option>
@@ -348,8 +267,8 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
                 </label>
                 <input
                   type="text"
-                  name="appointmentId"
-                  value={formData.appointmentId}
+                  name="appointment_id"
+                  value={formData.appointment_id}
                   onChange={handleChange}
                   placeholder="Optionnel"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -709,7 +628,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
           </div>
 
           {/* Résumé de la facture */}
-          {formData.patientId && items.length > 0 && (
+          {formData.patient_id && items.length > 0 && (
             <div className="bg-blue-50 rounded-lg p-4">
               <h3 className="font-medium text-blue-800 mb-2">Résumé de la Facture</h3>
               <div className="text-sm text-blue-700 space-y-1">
@@ -749,7 +668,7 @@ export function InvoiceForm({ invoice, onClose, onSave }: InvoiceFormProps) {
             </button>
             <button
               type="submit"
-              disabled={!formData.patientId || items.length === 0}
+              disabled={!formData.patient_id || items.length === 0}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="h-4 w-4" />

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Save, Package, AlertCircle } from 'lucide-react';
-import { Medicine } from '../../types';
+import { Database } from '../../lib/database.types';
+
+type Medicine = Database['public']['Tables']['medicines']['Row'];
 
 interface ProductFormProps {
   product?: Medicine;
@@ -13,11 +15,11 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
     name: product?.name || '',
     category: product?.category || 'medication',
     manufacturer: product?.manufacturer || '',
-    batchNumber: product?.batchNumber || '',
-    expiryDate: product?.expiryDate || '',
-    currentStock: product?.currentStock || 0,
-    minStock: product?.minStock || 0,
-    unitPrice: product?.unitPrice || 0,
+    batch_number: product?.batch_number || '',
+    expiry_date: product?.expiry_date || '',
+    current_stock: product?.current_stock || 0,
+    min_stock: product?.min_stock || 0,
+    unit_price: product?.unit_price || 0,
     location: product?.location || '',
     unit: product?.unit || '',
     description: product?.description || ''
@@ -39,30 +41,30 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
       newErrors.manufacturer = 'Le fabricant est requis';
     }
     
-    if (!formData.batchNumber.trim()) {
-      newErrors.batchNumber = 'Le numéro de lot est requis';
+    if (!formData.batch_number.trim()) {
+      newErrors.batch_number = 'Le numéro de lot est requis';
     }
     
-    if (!formData.expiryDate) {
-      newErrors.expiryDate = 'La date d\'expiration est requise';
+    if (!formData.expiry_date) {
+      newErrors.expiry_date = 'La date d\'expiration est requise';
     } else {
-      const expiryDate = new Date(formData.expiryDate);
+      const expiryDate = new Date(formData.expiry_date);
       const today = new Date();
       if (expiryDate <= today) {
-        newErrors.expiryDate = 'La date d\'expiration doit être dans le futur';
+        newErrors.expiry_date = 'La date d\'expiration doit être dans le futur';
       }
     }
     
-    if (formData.currentStock < 0) {
-      newErrors.currentStock = 'Le stock actuel ne peut pas être négatif';
+    if (formData.current_stock < 0) {
+      newErrors.current_stock = 'Le stock actuel ne peut pas être négatif';
     }
     
-    if (formData.minStock < 0) {
-      newErrors.minStock = 'Le stock minimum ne peut pas être négatif';
+    if (formData.min_stock < 0) {
+      newErrors.min_stock = 'Le stock minimum ne peut pas être négatif';
     }
     
-    if (formData.unitPrice <= 0) {
-      newErrors.unitPrice = 'Le prix unitaire doit être supérieur à 0';
+    if (formData.unit_price <= 0) {
+      newErrors.unit_price = 'Le prix unitaire doit être supérieur à 0';
     }
     
     if (!formData.location.trim()) {
@@ -78,9 +80,9 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
     if (Object.keys(newErrors).length === 0) {
       onSave({
         ...formData,
-        currentStock: Number(formData.currentStock),
-        minStock: Number(formData.minStock),
-        unitPrice: Number(formData.unitPrice)
+        current_stock: Number(formData.current_stock),
+        min_stock: Number(formData.min_stock),
+        unit_price: Number(formData.unit_price)
       });
     }
   };
@@ -99,8 +101,8 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
     const prefix = formData.manufacturer.substring(0, 2).toUpperCase() || 'XX';
     const year = new Date().getFullYear();
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const batchNumber = `${prefix}${year}${random}`;
-    setFormData({ ...formData, batchNumber });
+    const batch_number = `${prefix}${year}${random}`;
+    setFormData({ ...formData, batch_number });
   };
 
   const categoryOptions = [
@@ -214,11 +216,11 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
                 <div className="flex space-x-2">
                   <input
                     type="text"
-                    name="batchNumber"
-                    value={formData.batchNumber}
+                    name="batch_number"
+                    value={formData.batch_number}
                     onChange={handleChange}
                     className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.batchNumber ? 'border-red-300' : 'border-gray-300'
+                      errors.batch_number ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Ex: PC2024001"
                   />
@@ -230,10 +232,10 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
                     Générer
                   </button>
                 </div>
-                {errors.batchNumber && (
+                {errors.batch_number && (
                   <div className="flex items-center space-x-1 mt-1">
                     <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.batchNumber}</span>
+                    <span className="text-sm text-red-600">{errors.batch_number}</span>
                   </div>
                 )}
               </div>
@@ -265,18 +267,18 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
                 </label>
                 <input
                   type="number"
-                  name="currentStock"
-                  value={formData.currentStock}
+                  name="current_stock"
+                  value={formData.current_stock}
                   onChange={handleChange}
                   min="0"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.currentStock ? 'border-red-300' : 'border-gray-300'
+                    errors.current_stock ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
-                {errors.currentStock && (
+                {errors.current_stock && (
                   <div className="flex items-center space-x-1 mt-1">
                     <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.currentStock}</span>
+                    <span className="text-sm text-red-600">{errors.current_stock}</span>
                   </div>
                 )}
               </div>
@@ -287,18 +289,18 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
                 </label>
                 <input
                   type="number"
-                  name="minStock"
-                  value={formData.minStock}
+                  name="min_stock"
+                  value={formData.min_stock}
                   onChange={handleChange}
                   min="0"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.minStock ? 'border-red-300' : 'border-gray-300'
+                    errors.min_stock ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
-                {errors.minStock && (
+                {errors.min_stock && (
                   <div className="flex items-center space-x-1 mt-1">
                     <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.minStock}</span>
+                    <span className="text-sm text-red-600">{errors.min_stock}</span>
                   </div>
                 )}
               </div>
@@ -309,19 +311,19 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
                 </label>
                 <input
                   type="number"
-                  name="unitPrice"
-                  value={formData.unitPrice}
+                  name="unit_price"
+                  value={formData.unit_price}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.unitPrice ? 'border-red-300' : 'border-gray-300'
+                    errors.unit_price ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
-                {errors.unitPrice && (
+                {errors.unit_price && (
                   <div className="flex items-center space-x-1 mt-1">
                     <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.unitPrice}</span>
+                    <span className="text-sm text-red-600">{errors.unit_price}</span>
                   </div>
                 )}
               </div>
@@ -386,18 +388,18 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
                 </label>
                 <input
                   type="date"
-                  name="expiryDate"
-                  value={formData.expiryDate}
+                  name="expiry_date"
+                  value={formData.expiry_date}
                   onChange={handleChange}
                   min={new Date().toISOString().split('T')[0]}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.expiryDate ? 'border-red-300' : 'border-gray-300'
+                    errors.expiry_date ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
-                {errors.expiryDate && (
+                {errors.expiry_date && (
                   <div className="flex items-center space-x-1 mt-1">
                     <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.expiryDate}</span>
+                    <span className="text-sm text-red-600">{errors.expiry_date}</span>
                   </div>
                 )}
               </div>
@@ -405,14 +407,14 @@ export function ProductForm({ product, onClose, onSave }: ProductFormProps) {
           </div>
 
           {/* Résumé */}
-          {formData.name && formData.currentStock > 0 && formData.unitPrice > 0 && (
+          {formData.name && formData.current_stock > 0 && formData.unit_price > 0 && (
             <div className="bg-blue-50 rounded-lg p-4">
               <h3 className="font-medium text-blue-800 mb-2">Résumé</h3>
               <div className="text-sm text-blue-700 space-y-1">
                 <p><strong>Produit:</strong> {formData.name}</p>
-                <p><strong>Stock:</strong> {formData.currentStock} {formData.unit}</p>
-                <p><strong>Valeur totale:</strong> {(formData.currentStock * formData.unitPrice).toLocaleString()} FCFA</p>
-                {formData.currentStock <= formData.minStock && (
+                <p><strong>Stock:</strong> {formData.current_stock} {formData.unit}</p>
+                <p><strong>Valeur totale:</strong> {(formData.current_stock * formData.unit_price).toLocaleString()} FCFA</p>
+                {formData.current_stock <= formData.min_stock && (
                   <p className="text-orange-600"><strong>⚠️ Stock en dessous du minimum recommandé</strong></p>
                 )}
               </div>

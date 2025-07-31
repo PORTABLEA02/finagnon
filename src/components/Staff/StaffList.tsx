@@ -106,8 +106,17 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
 
   const handleDeleteStaff = (staffId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce membre du personnel ?')) {
-      // TODO: Implement delete functionality
-      console.log('Delete staff:', staffId);
+      const deleteStaff = async () => {
+        try {
+          // Note: Dans un vrai système, on désactiverait plutôt que de supprimer
+          await ProfileService.update(staffId, { is_active: false });
+          await loadStaff();
+        } catch (error) {
+          console.error('Error deleting staff:', error);
+          alert('Erreur lors de la suppression du personnel');
+        }
+      };
+      deleteStaff();
     }
   };
 
@@ -124,6 +133,16 @@ export function StaffList({ onSelectStaff, onNewStaff, onEditStaff }: StaffListP
     if (diffInHours < 24) return `Il y a ${diffInHours}h`;
     if (diffInHours < 48) return 'Hier';
     return date.toLocaleDateString('fr-FR');
+  };
+
+  const handleCreateStaff = async (staffData: any) => {
+    try {
+      // Cette fonction sera appelée depuis StaffForm
+      // L'implémentation dépendra de la création d'utilisateurs via Supabase Auth
+      console.log('Creating staff:', staffData);
+    } catch (error) {
+      console.error('Error creating staff:', error);
+    }
   };
 
   return (

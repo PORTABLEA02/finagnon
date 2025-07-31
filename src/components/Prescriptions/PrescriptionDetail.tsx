@@ -230,3 +230,5 @@ export function PrescriptionDetail({ consultation, onClose, onPrint }: Prescript
     </div>
   );
 }
+
+export { PrescriptionDetail }

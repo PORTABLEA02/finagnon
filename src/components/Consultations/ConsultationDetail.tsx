@@ -1,12 +1,12 @@
 import React from 'react';
 import { X, User, Calendar, FileText, Pill, Printer, Edit, Tag } from 'lucide-react';
-import { MedicalRecord } from '../../types';
+import { Database } from '../../lib/database.types';
+import { PatientService } from '../../services/patients';
 
-// Mock patients data
-const MOCK_PATIENTS = [
-  { id: '1', firstName: 'Jean', lastName: 'Nguema', phone: '+237 690 123 456', dateOfBirth: '1985-03-15', bloodType: 'A+', allergies: ['Pénicilline'] },
-  { id: '2', firstName: 'Marie', lastName: 'Atangana', phone: '+237 690 987 654', dateOfBirth: '1992-07-22', bloodType: 'O-', allergies: [] }
-];
+type MedicalRecord = Database['public']['Tables']['medical_records']['Row'] & {
+  prescriptions?: Database['public']['Tables']['prescriptions']['Row'][];
+};
+type Patient = Database['public']['Tables']['patients']['Row'];
 
 interface ConsultationDetailProps {
   consultation: MedicalRecord;
@@ -15,11 +15,24 @@ interface ConsultationDetailProps {
 }
 
 export function ConsultationDetail({ consultation, onClose, onEdit }: ConsultationDetailProps) {
-  const getPatientInfo = (patientId: string) => {
-    return MOCK_PATIENTS.find(p => p.id === patientId);
-  };
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const patient = getPatientInfo(consultation.patientId);
+  React.useEffect(() => {
+    loadPatientInfo();
+  }, [consultation.patient_id]);
+
+  const loadPatientInfo = async () => {
+    try {
+      setLoading(true);
+      const patientData = await PatientService.getById(consultation.patient_id);
+      setPatient(patientData);
+    } catch (error) {
+      console.error('Error loading patient info:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
@@ -35,6 +48,19 @@ export function ConsultationDetail({ consultation, onClose, onEdit }: Consultati
   const handlePrint = () => {
     window.print();
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getConsultationTypeLabel = (type: string) => {
     const types = {
@@ -101,21 +127,21 @@ export function ConsultationDetail({ consultation, onClose, onEdit }: Consultati
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <span className="text-sm font-medium text-gray-700">Nom complet:</span>
-                  <p className="text-gray-900">{patient.firstName} {patient.lastName}</p>
+                  <p className="text-gray-900">{patient?.first_name} {patient?.last_name}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-700">Âge:</span>
-                  <p className="text-gray-900">{calculateAge(patient.dateOfBirth)} ans</p>
+                  <p className="text-gray-900">{patient ? calculateAge(patient.date_of_birth) : 'N/A'} ans</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-700">Groupe sanguin:</span>
-                  <p className="text-gray-900">{patient.bloodType || 'Non défini'}</p>
+                  <p className="text-gray-900">{patient?.blood_type || 'Non défini'}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-700">Téléphone:</span>
-                  <p className="text-gray-900">{patient.phone}</p>
+                  <p className="text-gray-900">{patient?.phone}</p>
                 </div>
-                {patient.allergies.length > 0 && (
+                {patient?.allergies && patient.allergies.length > 0 && (
                   <div className="md:col-span-2 lg:col-span-4">
                     <span className="text-sm font-medium text-red-700">Allergies connues:</span>
                     <p className="text-red-600">{patient.allergies.join(', ')}</p>
@@ -180,7 +206,7 @@ export function ConsultationDetail({ consultation, onClose, onEdit }: Consultati
           </div>
 
           {/* Prescription */}
-          {consultation.prescription.length > 0 && (
+          {consultation.prescriptions && consultation.prescriptions.length > 0 && (
             <div className="bg-green-50 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-3">
                 <Pill className="h-5 w-5 text-green-600" />
@@ -188,7 +214,7 @@ export function ConsultationDetail({ consultation, onClose, onEdit }: Consultati
               </div>
               
               <div className="space-y-3">
-                {consultation.prescription.map((prescription, index) => (
+                {consultation.prescriptions.map((prescription, index) => (
                   <div key={index} className="bg-white rounded-lg p-4 border border-green-200">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-medium text-gray-900 text-lg">{prescription.medication}</h4>

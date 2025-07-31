@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Package, AlertTriangle, Calendar, MapPin, Edit, Trash2 } from 'lucide-react';
 import { Database } from '../../lib/database.types';
-import { supabase } from '../../lib/supabase';
+import { MedicineService } from '../../services/medicines';
 
 type Medicine = Database['public']['Tables']['medicines']['Row'];
 
@@ -9,9 +9,10 @@ interface ProductListProps {
   onSelectProduct: (product: Medicine) => void;
   onNewProduct: () => void;
   onEditProduct: (product: Medicine) => void;
+  onStockMovement: (product: Medicine) => void;
 }
 
-export function ProductList({ onSelectProduct, onNewProduct, onEditProduct }: ProductListProps) {
+export function ProductList({ onSelectProduct, onNewProduct, onEditProduct, onStockMovement }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,21 +24,24 @@ export function ProductList({ onSelectProduct, onNewProduct, onEditProduct }: Pr
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('medicines')
-        .select('*')
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching medicines:', error);
-        throw error;
-      }
-
-      setProducts(data || []);
+      const data = await MedicineService.getAll();
+      setProducts(data);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+      try {
+        await MedicineService.delete(productId);
+        await loadProducts();
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Erreur lors de la suppression du produit');
+      }
     }
   };
 
@@ -147,7 +151,7 @@ export function ProductList({ onSelectProduct, onNewProduct, onEditProduct }: Pr
                     </div>
                     <div>
                       <span className="text-gray-500">Prix unitaire:</span>
-                      <p className="font-medium text-gray-900">{product.unit_price}€</p>
+                      <p className="font-medium text-gray-900">{product.unit_price} FCFA</p>
                     </div>
                     <div>
                       <span className="text-gray-500">Expiration:</span>
@@ -202,12 +206,22 @@ export function ProductList({ onSelectProduct, onNewProduct, onEditProduct }: Pr
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      // TODO: Implement delete functionality
+                      handleDeleteProduct(product.id);
                     }}
                     className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
                     title="Supprimer"
                   >
                     <Trash2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStockMovement(product);
+                    }}
+                    className="text-green-600 hover:text-green-800 p-2 rounded-lg hover:bg-green-50 transition-colors"
+                    title="Mouvement de stock"
+                  >
+                    <Package className="h-4 w-4" />
                   </button>
                 </div>
               </div>

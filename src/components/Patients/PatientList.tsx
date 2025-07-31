@@ -3,8 +3,6 @@ import { Search, Plus, Eye, Edit, Phone, Mail } from 'lucide-react';
 import { Database } from '../../lib/database.types';
 import { useAuth } from '../../context/AuthContext';
 import { PatientService } from '../../services/patients';
-import { PatientDetail } from './PatientDetail';
-import { PatientForm } from './PatientForm';
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 
@@ -17,9 +15,6 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
   const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
-  const [showPatientForm, setShowPatientForm] = useState(false);
   const { user } = useAuth();
 
   // Charger les patients au montage du composant
@@ -103,6 +98,18 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
     savePatient();
   };
 
+  const handleDeletePatient = async (patientId: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible.')) {
+      try {
+        await PatientService.delete(patientId);
+        await loadPatients();
+      } catch (error) {
+        console.error('Error deleting patient:', error);
+        alert('Erreur lors de la suppression du patient');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -115,7 +122,7 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
@@ -224,6 +231,15 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
                     >
                       <Edit className="h-4 w-4" />
                     </button>
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={() => handleDeletePatient(patient.id)}
+                        className="text-red-600 hover:text-red-800 p-1 rounded transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -238,22 +254,6 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
         </div>
       )}
     </div>
-
-      {selectedPatient && (user?.role === 'doctor' || user?.role === 'admin') && (
-        <PatientDetail
-          patient={selectedPatient}
-          onClose={handleCloseDetail}
-          onEdit={handleEditFromDetail}
-        />
-      )}
-
-      {showPatientForm && (
-        <PatientForm
-          patient={editingPatient || undefined}
-          onClose={handleCloseForm}
-          onSave={handleSavePatient}
-        />
-      )}
-    </>
+    </div>
   );
 }

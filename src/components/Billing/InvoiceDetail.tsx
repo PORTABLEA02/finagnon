@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Edit, CreditCard, Printer, User, Calendar, DollarSign, FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { Invoice, Patient } from '../../types';
+import { Database } from '../../lib/database.types';
+import { PatientService } from '../../services/patients';
 
-// Mock patients data
-const MOCK_PATIENTS = [
-  { id: '1', first_name: 'Jean', last_name: 'Nguema', phone: '+237 690 123 456', email: 'jean.nguema@email.com', address: 'Yaoundé, Quartier Bastos' },
-  { id: '2', first_name: 'Marie', last_name: 'Atangana', phone: '+237 690 987 654', email: 'marie.atangana@email.com', address: 'Douala, Akwa' }
-];
+type Invoice = Database['public']['Tables']['invoices']['Row'] & {
+  invoice_items?: Database['public']['Tables']['invoice_items']['Row'][];
+};
+type Patient = Database['public']['Tables']['patients']['Row'];
 
 interface InvoiceDetailProps {
   invoice: Invoice;
@@ -16,11 +16,24 @@ interface InvoiceDetailProps {
 }
 
 export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetailProps) {
-  const getPatientInfo = (patientId: string) => {
-    return MOCK_PATIENTS.find(p => p.id === patientId);
-  };
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const patient = getPatientInfo(invoice.patientId);
+  React.useEffect(() => {
+    loadPatientInfo();
+  }, [invoice.patient_id]);
+
+  const loadPatientInfo = async () => {
+    try {
+      setLoading(true);
+      const patientData = await PatientService.getById(invoice.patient_id);
+      setPatient(patientData);
+    } catch (error) {
+      console.error('Error loading patient info:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusLabel = (status: string) => {
     const labels = {
@@ -367,7 +380,7 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
               </tr>
             </thead>
             <tbody>
-              ${invoice.items.map(item => `
+              ${invoice.invoice_items?.map(item => `
                 <tr>
                   <td>${item.description}</td>
                   <td class="text-center">${item.quantity}</td>
@@ -404,6 +417,19 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
       </html>
     `;
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-500 mt-2">Chargement...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -464,7 +490,7 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
               <div className="space-y-3">
                 <div>
                   <span className="text-sm font-medium text-gray-700">Numéro:</span>
-                  <p className="text-gray-900 font-medium">{patient?.first_name} {patient?.last_name}</p>
+                  <p className="text-gray-900 font-medium">{invoice.id}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-700">Date d'émission:</span>
@@ -511,19 +537,19 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
                 <div className="space-y-3">
                   <div>
                     <span className="text-sm font-medium text-gray-700">Nom complet:</span>
-                    <p className="text-gray-900 font-medium">{patient.firstName} {patient.lastName}</p>
+                    <p className="text-gray-900 font-medium">{patient?.first_name} {patient?.last_name}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-700">Téléphone:</span>
-                    <p className="text-gray-900">{patient.phone}</p>
+                    <p className="text-gray-900">{patient?.phone}</p>
                   </div>
-                  {patient.email && (
+                  {patient?.email && (
                     <div>
                       <span className="text-sm font-medium text-gray-700">Email:</span>
                       <p className="text-gray-900">{patient.email}</p>
                     </div>
                   )}
-                  {patient.address && (
+                  {patient?.address && (
                     <div>
                       <span className="text-sm font-medium text-gray-700">Adresse:</span>
                       <p className="text-gray-900">{patient.address}</p>
@@ -549,7 +575,7 @@ export function InvoiceDetail({ invoice, onClose, onEdit, onPay }: InvoiceDetail
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {invoice.items.map((item, index) => (
+                  {invoice.invoice_items?.map((item, index) => (
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-900">{item.description}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 text-center">{item.quantity}</td>

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { X, Save, TrendingUp, TrendingDown, Package, AlertCircle } from 'lucide-react';
-import { Medicine, StockMovement } from '../../types';
+import { Database } from '../../lib/database.types';
+
+type Medicine = Database['public']['Tables']['medicines']['Row'];
+type StockMovement = Database['public']['Tables']['stock_movements']['Row'];
 
 interface StockMovementFormProps {
   product: Medicine;
@@ -45,7 +48,7 @@ export function StockMovementForm({ product, onClose, onSave }: StockMovementFor
     
     if (Object.keys(newErrors).length === 0) {
       onSave({
-        medicineId: product.id,
+        medicine_id: product.id,
         type: formData.type,
         quantity: formData.quantity,
         reason: formData.reason,
@@ -66,8 +69,8 @@ export function StockMovementForm({ product, onClose, onSave }: StockMovementFor
   };
 
   const newStock = formData.type === 'in' 
-    ? product.currentStock + formData.quantity 
-    : product.currentStock - formData.quantity;
+    ? product.current_stock + formData.quantity 
+    : product.current_stock - formData.quantity;
 
   const reasonSuggestions = {
     in: [
@@ -118,7 +121,7 @@ export function StockMovementForm({ product, onClose, onSave }: StockMovementFor
               </div>
               <div>
                 <span className="font-medium text-gray-700">Stock actuel:</span>
-                <p className="text-gray-900 font-bold">{product.currentStock} {product.unit}</p>
+                <p className="text-gray-900 font-bold">{product.current_stock} {product.unit}</p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Emplacement:</span>
@@ -126,7 +129,7 @@ export function StockMovementForm({ product, onClose, onSave }: StockMovementFor
               </div>
               <div>
                 <span className="font-medium text-gray-700">Stock minimum:</span>
-                <p className="text-gray-900">{product.minStock} {product.unit}</p>
+                <p className="text-gray-900">{product.min_stock} {product.unit}</p>
               </div>
             </div>
           </div>
@@ -184,7 +187,7 @@ export function StockMovementForm({ product, onClose, onSave }: StockMovementFor
                     value={formData.quantity}
                     onChange={handleChange}
                     min="1"
-                    max={formData.type === 'out' ? product.currentStock : undefined}
+                    max={formData.type === 'out' ? product.current_stock : undefined}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.quantity ? 'border-red-300' : 'border-gray-300'
                     }`}
@@ -297,7 +300,7 @@ export function StockMovementForm({ product, onClose, onSave }: StockMovementFor
               </div>
             </div>
 
-            {newStock <= product.minStock && (
+            {newStock <= product.min_stock && (
               <div className="mt-3 p-3 bg-orange-100 border border-orange-200 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-5 w-5 text-orange-600" />
