@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, User, Phone, Mail, MapPin, Heart, AlertTriangle, Calendar, FileText, Pill, Clock } from 'lucide-react';
 import { Database } from '../../lib/database.types';
 import { supabase } from '../../lib/supabase';
