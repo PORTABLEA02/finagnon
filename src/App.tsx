@@ -39,24 +39,8 @@ function Dashboard() {
           <div>
             <PatientList 
               onSelectPatient={setSelectedPatient}
-              onAddPatient={() => {
-                setEditingPatient(null);
-                setShowPatientForm(true);
-              }}
+              onAddPatient={() => {}}
             />
-            {showPatientForm && (
-              <PatientForm
-                patient={editingPatient || undefined}
-                onClose={() => {
-                  setShowPatientForm(false);
-                  setEditingPatient(null);
-                }}
-                onSave={(patientData) => {
-                  setShowPatientForm(false);
-                  setEditingPatient(null);
-                }}
-              />
-            )}
           </div>
         );
 

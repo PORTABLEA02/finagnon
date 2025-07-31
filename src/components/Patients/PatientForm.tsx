@@ -28,6 +28,7 @@ export function PatientForm({ patient, onClose, onSave }: PatientFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔍 PatientForm.handleSubmit() - Soumission du formulaire patient avec les données:', formData);
     onSave({
       ...formData,
       allergies: formData.allergies.split(',').map(a => a.trim()).filter(a => a)

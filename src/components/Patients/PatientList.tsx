@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Search, Plus, Eye, Edit, Phone, Mail } from 'lucide-react';
+import { Search, Plus, Eye, Edit, Phone, Mail, Trash2 } from 'lucide-react';
 import { Database } from '../../lib/database.types';
 import { useAuth } from '../../context/AuthContext';
 import { PatientService } from '../../services/patients';
+import { PatientForm } from './PatientForm';
+import { PatientDetail } from './PatientDetail';
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 
@@ -15,6 +17,9 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
   const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showPatientForm, setShowPatientForm] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const { user } = useAuth();
 
   // Charger les patients au montage du composant
@@ -65,6 +70,11 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
     setShowPatientForm(true);
   };
 
+  const handleAddPatient = () => {
+    setEditingPatient(null);
+    setShowPatientForm(true);
+  };
+
   const handleCloseDetail = () => {
     setSelectedPatient(null);
   };
@@ -85,15 +95,20 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
   const handleSavePatient = (patientData: Partial<Patient>) => {
     const savePatient = async () => {
       try {
+        console.log('🔍 PatientList.handleSavePatient() - Sauvegarde du patient:', patientData);
         if (editingPatient) {
+          console.log('🔍 PatientList.handleSavePatient() - Mise à jour du patient existant:', editingPatient.id);
           await PatientService.update(editingPatient.id, patientData);
         } else {
+          console.log('🔍 PatientList.handleSavePatient() - Création d\'un nouveau patient');
           await PatientService.create(patientData as any);
         }
+        console.log('✅ PatientList.handleSavePatient() - Patient sauvegardé, rechargement de la liste');
         await loadPatients();
         setShowPatientForm(false);
         setEditingPatient(null);
       } catch (error) {
+        console.error('❌ PatientList.handleSavePatient() - Erreur lors de la sauvegarde du patient:', error);
         console.error('Error saving patient:', error);
         alert('Erreur lors de la sauvegarde du patient');
       }
@@ -134,7 +149,7 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Gestion des Patients</h2>
           <button
-            onClick={onAddPatient}
+            onClick={handleAddPatient}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
           >
             <Plus className="h-4 w-4" />
@@ -260,6 +275,24 @@ export function PatientList({ onSelectPatient, onAddPatient }: PatientListProps)
         </div>
       )}
     </div>
+
+      {/* Patient Form Modal */}
+      {showPatientForm && (
+        <PatientForm
+          patient={editingPatient || undefined}
+          onClose={handleCloseForm}
+          onSave={handleSavePatient}
+        />
+      )}
+
+      {/* Patient Detail Modal */}
+      {selectedPatient && (
+        <PatientDetail
+          patient={selectedPatient}
+          onClose={handleCloseDetail}
+          onEdit={handleEditFromDetail}
+        />
+      )}
     </div>
   );
 }
