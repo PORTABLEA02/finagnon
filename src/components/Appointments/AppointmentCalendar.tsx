@@ -74,7 +74,11 @@ export function AppointmentCalendar() {
   };
 
   const getAppointmentsForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
+    // Utiliser une méthode qui évite les problèmes de fuseau horaire
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
     return appointments.filter(apt => apt.date === dateString);
   };
 
@@ -119,7 +123,12 @@ export function AppointmentCalendar() {
   };
 
   const handleDateClick = (date: Date) => {
-    setSelectedDate(date.toISOString().split('T')[0]);
+    // Utiliser une méthode qui évite les problèmes de fuseau horaire
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    setSelectedDate(dateString);
   };
 
   const handleNewAppointment = () => {
@@ -256,7 +265,12 @@ export function AppointmentCalendar() {
               }
               
               const dayAppointments = getAppointmentsForDate(day);
-              const isSelected = day.toISOString().split('T')[0] === selectedDate;
+              // Comparer les dates de manière plus fiable
+              const year = day.getFullYear();
+              const month = String(day.getMonth() + 1).padStart(2, '0');
+              const dayNum = String(day.getDate()).padStart(2, '0');
+              const dayString = `${year}-${month}-${dayNum}`;
+              const isSelected = dayString === selectedDate;
               const isToday = day.toDateString() === new Date().toDateString();
               
               return (
